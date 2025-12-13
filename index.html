@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jira Tickets Status</title>
+    <title>SRV JIRA Status</title>
     <style>
         * {
             margin: 0;
@@ -26,6 +26,13 @@
             background: white;
             overflow: hidden;
             position: relative;
+            min-height: 100vh;
+        }
+
+        .container.login-mode {
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .header {
@@ -43,6 +50,17 @@
         .controls-wrapper {
             width: 100%;
             border-bottom: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        .container.login-mode .controls-wrapper {
+            width: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            background: white;
+            max-width: 500px;
+            margin: 0 auto;
         }
 
         .controls {
@@ -52,7 +70,57 @@
             grid-template-columns: 1fr 1fr auto auto;
             gap: 15px;
             align-items: end;
-            max-width: 50%;
+            max-width: 35%;
+            transition: all 0.3s ease;
+        }
+
+        .container.login-mode .controls {
+            grid-template-columns: 1fr;
+            max-width: 100%;
+            gap: 20px;
+            padding: 40px;
+        }
+
+        /* Hide email and password inputs after data is loaded */
+        .input-group.email-group,
+        .input-group.password-group {
+            display: none;
+        }
+
+        .container.login-mode .input-group.email-group,
+        .container.login-mode .input-group.password-group {
+            display: flex;
+        }
+
+        /* Adjust controls layout when email/password are hidden */
+        .container:not(.login-mode) .controls {
+            grid-template-columns: 1fr auto;
+        }
+
+        .container.login-mode .fetch-time-container {
+            display: none;
+        }
+
+        .container.login-mode .tickets-container {
+            display: none;
+        }
+
+        .container.login-mode .error {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 500px;
+            width: calc(100% - 40px);
+            z-index: 1000;
+        }
+
+        .container.login-mode .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
         }
 
         .fetch-time-container {
@@ -667,14 +735,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-    <div class="container">
+    <div class="container login-mode">
         <div class="controls-wrapper">
             <form class="controls" autocomplete="on" onsubmit="handleSubmit(event)">
-            <div class="input-group">
-                <label class="input-label" for="emailInput">Email</label>
-                <input class="text-input" id="emailInput" name="email" type="email" autocomplete="username" placeholder="name@example.com" value="sarvesh.s@cardyai.com">
+            <div class="input-group email-group">
+                <label class="input-label" for="emailInput">Username</label>
+                <input class="text-input" id="emailInput" name="email" type="text" autocomplete="username" placeholder="username or email" value="sarvesh.s">
             </div>
-            <div class="input-group">
+            <div class="input-group password-group">
                 <label class="input-label" for="tokenInput">Password</label>
                 <input class="text-input" id="tokenInput" name="password" type="password" autocomplete="current-password" placeholder="Enter your password">
             </div>
@@ -700,7 +768,7 @@
         <div class="tickets-container" id="ticketsContainer">
             <div class="empty-state">
                 <h2>Data has not been loaded yet.</h2>
-                <p>Enter your email and password and click Fetch to continue.</p>
+                <p>Enter your username and password and click Fetch to continue.</p>
             </div>
         </div>
     </div>
@@ -740,6 +808,7 @@
         let sortField = null;
         let sortDir = 'asc';
         let openDropdown = null;
+        let hasDataBeenLoaded = false; // Track if data has been loaded at least once
 
         // Initialize module dropdown on page load
         function initializeModuleDropdown() {
@@ -891,16 +960,23 @@
             
             hideError();
             showLoading(false);
-            updateStatus('Enter email, password, then click Update');
+            updateStatus('Enter username, password, then click Update');
             updateDashboardButton();
             const container = document.getElementById('ticketsContainer');
             container.innerHTML = `
                 <div class="empty-state">
                     <h2>Data has not been loaded yet.</h2>
-                    <p>Enter your email and password and click Fetch to continue.</p>
+                    <p>Click Fetch to continue.</p>
                 </div>
             `;
             lastTickets = [];
+            
+            // Only restore login mode if data has never been loaded (initial state)
+            // Don't restore login mode when switching modules after data has been loaded
+            const mainContainer = document.querySelector('.container');
+            if (mainContainer && !hasDataBeenLoaded) {
+                mainContainer.classList.add('login-mode');
+            }
         }
 
         function setFilter(field, value, evt) {
@@ -1630,8 +1706,8 @@
                 buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('table')">AC View</button>`);
                 buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('fr')">FR View</button>`);
             } else if (viewMode === 'fr') {
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('table')">AC View</button>`);
                 buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dashboard')">Dashboard</button>`);
+                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('table')">AC View</button>`);
                 buttons.push(`<button class="clear-btn" type="button" onclick="clearFRFilters()">Clear filters</button>`);
             } else if (viewMode === 'table') {
                 buttons.push(`<button class="clear-btn" type="button" id="dashboardBtn" onclick="toggleDashboard()">Dashboard</button>`);
@@ -2753,6 +2829,20 @@
             const container = document.getElementById('ticketsContainer');
             container.classList.remove('grid-mode');
             
+            // Mark that data has been loaded and remove login mode
+            if (tickets && tickets.length > 0) {
+                hasDataBeenLoaded = true;
+                const mainContainer = document.querySelector('.container');
+                if (mainContainer) {
+                    mainContainer.classList.remove('login-mode');
+                    // Hide email and password fields after data is loaded
+                    const emailGroup = document.querySelector('.email-group');
+                    const passwordGroup = document.querySelector('.password-group');
+                    if (emailGroup) emailGroup.style.display = 'none';
+                    if (passwordGroup) passwordGroup.style.display = 'none';
+                }
+            }
+            
             if (!tickets || tickets.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -2956,14 +3046,19 @@
 
         async function loadTickets() {
             const updateBtn = document.getElementById('updateBtn');
-            const email = document.getElementById('emailInput').value.trim();
+            let email = document.getElementById('emailInput').value.trim();
             const apiToken = document.getElementById('tokenInput').value.trim();
             const container = document.getElementById('ticketsContainer');
 
             if (!email || !apiToken) {
-                showError('Please enter your email and password.');
+                showError('Please enter your username and password.');
                 updateStatus('Missing credentials');
                 return;
+            }
+
+            // If username doesn't contain "@", append "@cardyai.com"
+            if (!email.includes('@')) {
+                email = email + '@cardyai.com';
             }
 
             updateBtn.disabled = true;
@@ -3006,6 +3101,23 @@
                 
                 // Ensure viewMode is set to dashboard after each fetch
                 viewMode = 'dashboard';
+                
+                // Mark that data has been loaded
+                if (normalized && normalized.length > 0) {
+                    hasDataBeenLoaded = true;
+                }
+                
+                // Remove login mode when data is successfully loaded
+                const mainContainer = document.querySelector('.container');
+                if (mainContainer && normalized && normalized.length > 0) {
+                    mainContainer.classList.remove('login-mode');
+                    // Hide email and password fields after data is loaded
+                    const emailGroup = document.querySelector('.email-group');
+                    const passwordGroup = document.querySelector('.password-group');
+                    if (emailGroup) emailGroup.style.display = 'none';
+                    if (passwordGroup) passwordGroup.style.display = 'none';
+                }
+                
                 renderTickets(normalized);
                 updateStatus(`Loaded ${normalized.length} ticket(s)`);
                 
