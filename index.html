@@ -1,10 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SRV JIRA Board</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%231c65e3' d='M64 64c0-17.7-14.3-32-32-32S0 46.3 0 64L0 400c0 44.2 35.8 80 80 80l400 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L80 416c-8.8 0-16-7.2-16-16L64 64zm406.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L320 210.7 262.6 153.4c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l73.4-73.4 57.4 57.4c12.5 12.5 32.8 12.5 45.3 0l128-128z'/%3E%3C/svg%3E">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%231c65e3' d='M64 64c0-17.7-14.3-32-32-32S0 46.3 0 64L0 400c0 44.2 35.8 80 80 80l400 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L80 416c-8.8 0-16-7.2-16-16L64 64zm406.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L320 210.7 262.6 153.4c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l73.4-73.4 57.4 57.4c12.5 12.5 32.8 12.5 45.3 0l128-128z'/%3E%3C/svg%3E">
+    <script>
+        // JIRA Apps Script URL - Update this when you deploy a new version
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw93WuxmIrlUdwzzjUlSEzGoJK3sFDqt1ieD4OGf1lASEnPj0IedTcTN7LCZpgm30ilIA/exec';
+        const JIRA_BASE_URL = 'https://cardyai-hawaii.atlassian.net/browse/';
+    </script>
     <style>
         * {
             margin: 0;
@@ -264,8 +271,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .error {
@@ -362,7 +374,8 @@
             border-collapse: collapse;
         }
 
-        .tickets-table th, .tickets-table td {
+        .tickets-table th,
+        .tickets-table td {
             text-align: left;
             padding: 10px 12px;
             border-bottom: 1px solid #e0e0e0;
@@ -446,7 +459,7 @@
             border: 1px solid #e0e0e0;
             border-radius: 8px;
             padding: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
         .dash-card h3 {
@@ -501,7 +514,8 @@
             margin-bottom: 16px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
+            flex-wrap: wrap;
         }
 
         .date-picker-label {
@@ -534,6 +548,7 @@
 
         .worklog-input-container {
             display: flex;
+            align-items: flex-end;
             gap: 15px;
             margin-bottom: 16px;
             flex-wrap: wrap;
@@ -606,6 +621,14 @@
             text-decoration: underline;
         }
 
+        .worklog-detail-date {
+            color: #666;
+            white-space: nowrap;
+            min-width: 100px;
+            margin-right: 15px;
+            font-size: 14px;
+        }
+
         .worklog-detail-description {
             flex: 1;
             color: #444;
@@ -615,6 +638,55 @@
         .time-low-hours {
             color: #d32f2f;
             font-weight: 600;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked+.toggle-slider {
+            background-color: #1868DB;
+        }
+
+        .toggle-switch input:checked+.toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .toggle-switch input:focus+.toggle-slider {
+            box-shadow: 0 0 1px #1868DB;
         }
 
         .dash-section-title {
@@ -671,7 +743,7 @@
             background: #fff;
             border: 1px solid #d0d0d0;
             border-radius: 6px;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
             max-height: 220px;
             overflow: auto;
             padding: 8px 10px;
@@ -723,17 +795,16 @@
             font-weight: 600;
         }
 
+        .due-date-overdue {
+            color: #d32f2f;
+            font-weight: 600;
+        }
+
         .widget-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
-            background: rgba(24, 104, 219, 0.12);
-            padding: 10px 12px;
-            margin-left: -16px;
-            margin-right: -16px;
-            margin-top: -16px;
-            border-radius: 8px 8px 0 0;
         }
 
         .widget-header h3 {
@@ -769,12 +840,146 @@
             fill: #1868DB;
         }
 
+        /* Subtask Grouping Styles */
+        .subtask-group {
+            margin-bottom: 24px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .group-header {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            margin: 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .group-key {
+            font-family: monospace;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .group-key:hover {
+            background: #1976d2;
+            color: white;
+            text-decoration: none;
+        }
+
+        .ticket-link {
+            color: #1868DB;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .ticket-link:hover {
+            text-decoration: underline;
+        }
+
+        .group-summary {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .subtask-table {
+            margin: 0 !important;
+            border: none !important;
+            width: 100%;
+        }
+
+        .subtask-table th {
+            background: #fff !important;
+            font-size: 0.85em;
+            border-bottom: 2px solid #eee;
+        }
+
+        /* Toggle & Header Styles */
+        .group-header.clickable {
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .group-header.clickable:hover {
+            background: #eef2f6;
+        }
+
+        .caret-icon {
+            display: inline-block;
+            font-size: 10px;
+            margin-right: 4px;
+            transition: transform 0.2s;
+            color: #666;
+        }
+
+        .caret-icon.open {
+            transform: rotate(90deg);
+        }
+
+        .subtask-badge {
+            margin-left: auto;
+            font-size: 0.8em;
+            color: #888;
+            font-weight: normal;
+        }
+
+        .post-results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .post-results-header h3 {
+            margin: 0;
+        }
+
+        .expand-collapse-controls {
+            font-size: 0.9em;
+        }
+
+        .text-btn {
+            background: none;
+            border: none;
+            color: #1868DB;
+            cursor: pointer;
+            padding: 4px 8px;
+            font-size: inherit;
+        }
+
+        .text-btn:hover {
+            text-decoration: underline;
+        }
+
+        .separator {
+            color: #ccc;
+            margin: 0 4px;
+        }
+
+
         .snapshot-icon:active {
             background: rgba(24, 104, 219, 0.2);
+        }
+
+        /* Dev View Styling */
+        .clickable {
+            cursor: pointer;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
+
 <body>
     <div class="container login-mode">
         <div class="login-svg-section">
@@ -783,109 +988,131 @@
                     <!-- Background grid pattern -->
                     <defs>
                         <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1868DB" stroke-width="0.5" opacity="0.08"/>
+                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1868DB" stroke-width="0.5"
+                                opacity="0.08" />
                         </pattern>
                     </defs>
-                    <rect width="800" height="600" fill="url(#grid)"/>
-                    
+                    <rect width="800" height="600" fill="url(#grid)" />
+
                     <!-- Rotated Bar Chart Card (Top Left) -->
                     <g transform="translate(50, 40) rotate(-5)">
-                        <rect x="0" y="0" width="180" height="140" fill="white" stroke="#1868DB" stroke-width="2" opacity="0.25" rx="8"/>
-                        <text x="10" y="20" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1868DB" opacity="0.5">Weekly Stats</text>
-                        <rect x="20" y="50" width="20" height="60" fill="#1868DB" opacity="0.4" rx="2"/>
-                        <rect x="50" y="40" width="20" height="70" fill="#1868DB" opacity="0.5" rx="2"/>
-                        <rect x="80" y="30" width="20" height="80" fill="#1868DB" opacity="0.6" rx="2"/>
-                        <rect x="110" y="45" width="20" height="65" fill="#1868DB" opacity="0.45" rx="2"/>
-                        <rect x="140" y="35" width="20" height="75" fill="#1868DB" opacity="0.55" rx="2"/>
+                        <rect x="0" y="0" width="180" height="140" fill="white" stroke="#1868DB" stroke-width="2"
+                            opacity="0.25" rx="8" />
+                        <text x="10" y="20" font-family="Arial, sans-serif" font-size="11" font-weight="600"
+                            fill="#1868DB" opacity="0.5">Weekly Stats</text>
+                        <rect x="20" y="50" width="20" height="60" fill="#1868DB" opacity="0.4" rx="2" />
+                        <rect x="50" y="40" width="20" height="70" fill="#1868DB" opacity="0.5" rx="2" />
+                        <rect x="80" y="30" width="20" height="80" fill="#1868DB" opacity="0.6" rx="2" />
+                        <rect x="110" y="45" width="20" height="65" fill="#1868DB" opacity="0.45" rx="2" />
+                        <rect x="140" y="35" width="20" height="75" fill="#1868DB" opacity="0.55" rx="2" />
                     </g>
-                    
+
                     <!-- Line Chart Card (Top Right, rotated) -->
                     <g transform="translate(550, 60) rotate(8)">
-                        <rect x="0" y="0" width="200" height="120" fill="white" stroke="#1868DB" stroke-width="2" opacity="0.25" rx="8"/>
-                        <text x="10" y="20" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1868DB" opacity="0.5">Trend Analysis</text>
-                        <polyline points="15,100 40,80 65,60 90,70 115,50 140,45 165,40 180,35" 
-                                  fill="none" stroke="#1868DB" stroke-width="3" opacity="0.5" stroke-linecap="round"/>
-                        <circle cx="15" cy="100" r="3" fill="#1868DB" opacity="0.6"/>
-                        <circle cx="90" cy="70" r="3" fill="#1868DB" opacity="0.6"/>
-                        <circle cx="165" cy="40" r="3" fill="#1868DB" opacity="0.6"/>
+                        <rect x="0" y="0" width="200" height="120" fill="white" stroke="#1868DB" stroke-width="2"
+                            opacity="0.25" rx="8" />
+                        <text x="10" y="20" font-family="Arial, sans-serif" font-size="11" font-weight="600"
+                            fill="#1868DB" opacity="0.5">Trend Analysis</text>
+                        <polyline points="15,100 40,80 65,60 90,70 115,50 140,45 165,40 180,35" fill="none"
+                            stroke="#1868DB" stroke-width="3" opacity="0.5" stroke-linecap="round" />
+                        <circle cx="15" cy="100" r="3" fill="#1868DB" opacity="0.6" />
+                        <circle cx="90" cy="70" r="3" fill="#1868DB" opacity="0.6" />
+                        <circle cx="165" cy="40" r="3" fill="#1868DB" opacity="0.6" />
                     </g>
-                    
+
                     <!-- Pie Chart Card (Middle Left, rotated) -->
                     <g transform="translate(80, 220) rotate(-12)">
-                        <rect x="0" y="0" width="160" height="160" fill="white" stroke="#1868DB" stroke-width="2" opacity="0.25" rx="8"/>
-                        <text x="10" y="20" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1868DB" opacity="0.5">Distribution</text>
-                        <circle cx="80" cy="100" r="50" fill="none" stroke="#1868DB" stroke-width="2" opacity="0.3"/>
-                        <path d="M 80 50 L 80 100 A 50 50 0 0 1 120 100 Z" fill="#1868DB" opacity="0.4"/>
-                        <path d="M 80 100 L 120 100 A 50 50 0 0 1 100 150 Z" fill="#1868DB" opacity="0.5"/>
-                        <path d="M 80 100 L 100 150 A 50 50 0 0 1 40 120 Z" fill="#1868DB" opacity="0.6"/>
+                        <rect x="0" y="0" width="160" height="160" fill="white" stroke="#1868DB" stroke-width="2"
+                            opacity="0.25" rx="8" />
+                        <text x="10" y="20" font-family="Arial, sans-serif" font-size="11" font-weight="600"
+                            fill="#1868DB" opacity="0.5">Distribution</text>
+                        <circle cx="80" cy="100" r="50" fill="none" stroke="#1868DB" stroke-width="2" opacity="0.3" />
+                        <path d="M 80 50 L 80 100 A 50 50 0 0 1 120 100 Z" fill="#1868DB" opacity="0.4" />
+                        <path d="M 80 100 L 120 100 A 50 50 0 0 1 100 150 Z" fill="#1868DB" opacity="0.5" />
+                        <path d="M 80 100 L 100 150 A 50 50 0 0 1 40 120 Z" fill="#1868DB" opacity="0.6" />
                     </g>
-                    
+
                     <!-- Stat Cards (Middle Right, scattered) -->
                     <g transform="translate(480, 200)">
-                        <rect x="0" y="0" width="120" height="90" fill="#1868DB" opacity="0.12" rx="6"/>
-                        <text x="10" y="18" font-family="Arial, sans-serif" font-size="10" fill="#1868DB" opacity="0.5">Total Issues</text>
-                        <text x="10" y="50" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#1868DB" opacity="0.7">142</text>
-                        <text x="10" y="70" font-family="Arial, sans-serif" font-size="9" fill="#1868DB" opacity="0.4">+12% this week</text>
+                        <rect x="0" y="0" width="120" height="90" fill="#1868DB" opacity="0.12" rx="6" />
+                        <text x="10" y="18" font-family="Arial, sans-serif" font-size="10" fill="#1868DB"
+                            opacity="0.5">Total Issues</text>
+                        <text x="10" y="50" font-family="Arial, sans-serif" font-size="24" font-weight="700"
+                            fill="#1868DB" opacity="0.7">142</text>
+                        <text x="10" y="70" font-family="Arial, sans-serif" font-size="9" fill="#1868DB"
+                            opacity="0.4">+12% this week</text>
                     </g>
-                    
+
                     <g transform="translate(620, 280) rotate(5)">
-                        <rect x="0" y="0" width="120" height="90" fill="#1868DB" opacity="0.12" rx="6"/>
-                        <text x="10" y="18" font-family="Arial, sans-serif" font-size="10" fill="#1868DB" opacity="0.5">Completed</text>
-                        <text x="10" y="50" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#1868DB" opacity="0.7">89</text>
-                        <text x="10" y="70" font-family="Arial, sans-serif" font-size="9" fill="#1868DB" opacity="0.4">+8% this week</text>
+                        <rect x="0" y="0" width="120" height="90" fill="#1868DB" opacity="0.12" rx="6" />
+                        <text x="10" y="18" font-family="Arial, sans-serif" font-size="10" fill="#1868DB"
+                            opacity="0.5">Completed</text>
+                        <text x="10" y="50" font-family="Arial, sans-serif" font-size="24" font-weight="700"
+                            fill="#1868DB" opacity="0.7">89</text>
+                        <text x="10" y="70" font-family="Arial, sans-serif" font-size="9" fill="#1868DB"
+                            opacity="0.4">+8% this week</text>
                     </g>
-                    
+
                     <!-- Horizontal Bar Chart (Bottom Left, rotated) -->
                     <g transform="translate(120, 420) rotate(10)">
-                        <rect x="0" y="0" width="220" height="130" fill="white" stroke="#1868DB" stroke-width="2" opacity="0.25" rx="8"/>
-                        <text x="10" y="20" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1868DB" opacity="0.5">Progress Overview</text>
-                        <rect x="20" y="40" width="150" height="12" fill="#1868DB" opacity="0.4" rx="6"/>
-                        <rect x="20" y="60" width="120" height="12" fill="#1868DB" opacity="0.5" rx="6"/>
-                        <rect x="20" y="80" width="180" height="12" fill="#1868DB" opacity="0.6" rx="6"/>
-                        <rect x="20" y="100" width="90" height="12" fill="#1868DB" opacity="0.45" rx="6"/>
+                        <rect x="0" y="0" width="220" height="130" fill="white" stroke="#1868DB" stroke-width="2"
+                            opacity="0.25" rx="8" />
+                        <text x="10" y="20" font-family="Arial, sans-serif" font-size="11" font-weight="600"
+                            fill="#1868DB" opacity="0.5">Progress Overview</text>
+                        <rect x="20" y="40" width="150" height="12" fill="#1868DB" opacity="0.4" rx="6" />
+                        <rect x="20" y="60" width="120" height="12" fill="#1868DB" opacity="0.5" rx="6" />
+                        <rect x="20" y="80" width="180" height="12" fill="#1868DB" opacity="0.6" rx="6" />
+                        <rect x="20" y="100" width="90" height="12" fill="#1868DB" opacity="0.45" rx="6" />
                     </g>
-                    
+
                     <!-- Area Chart (Bottom Right, rotated) -->
                     <g transform="translate(500, 380) rotate(-8)">
-                        <rect x="0" y="0" width="240" height="150" fill="white" stroke="#1868DB" stroke-width="2" opacity="0.25" rx="8"/>
-                        <text x="10" y="20" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1868DB" opacity="0.5">Performance</text>
-                        <polyline points="20,130 50,110 80,90 110,100 140,80 170,70 200,65 220,60" 
-                                  fill="#1868DB" fill-opacity="0.15" stroke="#1868DB" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
-                        <polyline points="20,130 50,110 80,90 110,100 140,80 170,70 200,65 220,60 L 220 130 L 20 130 Z" 
-                                  fill="#1868DB" fill-opacity="0.1"/>
+                        <rect x="0" y="0" width="240" height="150" fill="white" stroke="#1868DB" stroke-width="2"
+                            opacity="0.25" rx="8" />
+                        <text x="10" y="20" font-family="Arial, sans-serif" font-size="11" font-weight="600"
+                            fill="#1868DB" opacity="0.5">Performance</text>
+                        <polyline points="20,130 50,110 80,90 110,100 140,80 170,70 200,65 220,60" fill="#1868DB"
+                            fill-opacity="0.15" stroke="#1868DB" stroke-width="2" opacity="0.5"
+                            stroke-linecap="round" />
+                        <polyline points="20,130 50,110 80,90 110,100 140,80 170,70 200,65 220,60 L 220 130 L 20 130 Z"
+                            fill="#1868DB" fill-opacity="0.1" />
                     </g>
-                    
+
                     <!-- Small Stat Card (Center, rotated) -->
                     <g transform="translate(350, 250) rotate(-15)">
-                        <rect x="0" y="0" width="100" height="80" fill="#1868DB" opacity="0.12" rx="6"/>
-                        <text x="10" y="18" font-family="Arial, sans-serif" font-size="10" fill="#1868DB" opacity="0.5">In Progress</text>
-                        <text x="10" y="50" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#1868DB" opacity="0.7">53</text>
+                        <rect x="0" y="0" width="100" height="80" fill="#1868DB" opacity="0.12" rx="6" />
+                        <text x="10" y="18" font-family="Arial, sans-serif" font-size="10" fill="#1868DB"
+                            opacity="0.5">In Progress</text>
+                        <text x="10" y="50" font-family="Arial, sans-serif" font-size="22" font-weight="700"
+                            fill="#1868DB" opacity="0.7">53</text>
                     </g>
-                    
+
                     <!-- Decorative elements -->
-                    <circle cx="700" cy="100" r="35" fill="#1868DB" opacity="0.08"/>
-                    <circle cx="100" cy="500" r="30" fill="#1868DB" opacity="0.08"/>
-                    <circle cx="650" cy="500" r="25" fill="#1868DB" opacity="0.08"/>
+                    <circle cx="700" cy="100" r="35" fill="#1868DB" opacity="0.08" />
+                    <circle cx="100" cy="500" r="30" fill="#1868DB" opacity="0.08" />
+                    <circle cx="650" cy="500" r="25" fill="#1868DB" opacity="0.08" />
                 </svg>
             </div>
         </div>
         <div class="controls-wrapper">
             <form class="controls" autocomplete="on" onsubmit="handleSubmit(event)">
-            <div class="input-group email-group">
-                <label class="input-label" for="emailInput">Username</label>
-                <input class="text-input" id="emailInput" name="email" type="text" autocomplete="username" placeholder="username or email" value="sarvesh.s">
-            </div>
-            <div class="input-group password-group">
-                <label class="input-label" for="tokenInput">Password</label>
-                <input class="text-input" id="tokenInput" name="password" type="password" autocomplete="current-password" placeholder="Enter your password">
-            </div>
-            <div class="input-group">
-                <label class="input-label" for="moduleSelect">Module</label>
-                <select class="select-input" id="moduleSelect" onchange="switchModule(this.value)">
-                    <!-- Options will be populated dynamically from modules configuration -->
-                </select>
-            </div>
-            <button class="action-btn" type="submit" id="updateBtn">Fetch</button>
+                <div class="input-group email-group">
+                    <label class="input-label" for="emailInput">Username</label>
+                    <input class="text-input" id="emailInput" name="email" type="text" autocomplete="username"
+                        placeholder="username or email" value="sarvesh.s">
+                </div>
+                <div class="input-group password-group">
+                    <label class="input-label" for="tokenInput">Password</label>
+                    <input class="text-input" id="tokenInput" name="password" type="password"
+                        autocomplete="current-password" placeholder="Enter your password">
+                </div>
+                <div class="input-group">
+                    <label class="input-label" for="moduleSelect">Module</label>
+                    <select class="select-input" id="moduleSelect" onchange="switchModule(this.value)">
+                        <!-- Options will be populated dynamically from modules configuration -->
+                    </select>
+                </div>
+                <button class="action-btn" type="submit" id="updateBtn">Fetch</button>
             </form>
         </div>
         <div class="fetch-time-container">
@@ -908,7 +1135,6 @@
 
     <script>
         // Add a timestamp to avoid caching issues
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyJZR89idUZgp7CS_bt5d3I5ftDLjUlr6gbbfzib0zMUbfvPYGXnSrfQSCzlJ37H1zcoA/exec';
 
         function updateStatus(message) {
             // Status display removed
@@ -917,17 +1143,30 @@
         // Module configuration - Add new modules here by providing module ID, display name, and EM ID
         const modules = {
             licensing: {
-                name: 'Licensing',
-                emId: 'EM-896'
+                name: 'Licensing Sprint 3',
+                emId: 'EM-896',
+                sprintId: '1129'
             },
             assessments: {
-                name: 'Assessments',
-                emId: 'EM-1460'
+                name: 'Assessments Sprint 2',
+                emId: 'EM-1460',
+                sprintId: '1128'
             },
             testmodule: {
                 name: 'Testmodule',
-                emId: 'EM-5860'
-            }
+                emId: 'EM-5860',
+                sprintId: ''
+            },
+            licensing2: {
+                name: 'Licensing Sprint 2',
+                emId: 'EM-896',
+                sprintId: '925'
+            },
+            assessments1: {
+                name: 'Assessments Sprint 1',
+                emId: 'EM-1460',
+                sprintId: '923'
+            },
             // To add a new module, uncomment and modify:
             // newModule: {
             //     name: 'New Module',
@@ -936,21 +1175,29 @@
         };
 
         let activeModule = 'licensing'; // Default module
-        let viewMode = 'dashboard'; // 'table' | 'dashboard' | 'fr'
+        let viewMode = 'dashboard'; // 'table' | 'dashboard' | 'fr' | 'worklog'
         let lastTickets = [];
+        let frDataCache = [];
+        let lastDevSubtasks = []; // Store fetched subtasks
+        let lastDevBugsDetailed = []; // Store detailed bug information (assignee, dueDate)
+        let devAssigneeFilters = []; // Store selected assignees for Dev View
+        let devTypeFilter = ['Story', 'Sub Task', 'Bug']; // Store selected ticket types for Dev View
+        let devStatusFilters = []; // Store selected statuses for Dev View
         let sortField = null;
         let sortDir = 'asc';
         let openDropdown = null;
         let hasDataBeenLoaded = false; // Track if data has been loaded at least once
+        let savedEmail = '';
+        let savedApiToken = '';
 
         // Initialize module dropdown on page load
         function initializeModuleDropdown() {
             const moduleSelect = document.getElementById('moduleSelect');
             if (!moduleSelect) return;
-            
+
             // Clear existing options
             moduleSelect.innerHTML = '';
-            
+
             // Populate dropdown from modules configuration
             Object.entries(modules).forEach(([id, module]) => {
                 const option = document.createElement('option');
@@ -978,6 +1225,7 @@
             { id: 'assignee', label: 'Assignee', sortable: 'assignee' },
             { id: 'priority', label: 'Priority', sortable: 'priority' },
             { id: 'storyPoints', label: 'Story Points', sortable: 'storyPoints' },
+            { id: 'dueDate', label: 'Due Date', sortable: 'dueDate' },
             { id: 'timeOriginalEstimate', label: 'Estimate', sortable: 'timeOriginalEstimate' },
             { id: 'actualHours', label: 'Time Spent', sortable: 'actualHours' },
             { id: 'timeDifference', label: 'Difference', sortable: 'timeDifference' },
@@ -986,8 +1234,9 @@
             { id: 'qaFailedCount', label: 'QA Loop', sortable: 'qaFailedCount', className: 'qa-col' },
             { id: 'totalBugs', label: 'Total Bugs', sortable: 'totalBugs', className: 'qa-col' },
             { id: 'openBugs', label: 'Open Bugs', sortable: 'openBugs', className: 'qa-col' },
+            { id: 'subTaskCount', label: 'Sub Tasks', sortable: 'subTaskCount', className: 'qa-col' },
         ];
-        
+
         // Single source of truth for default column visibility
         function getDefaultColumnVisibility() {
             return {
@@ -998,6 +1247,7 @@
                 assignee: true,
                 priority: false,
                 storyPoints: true,
+                dueDate: true,
                 timeOriginalEstimate: true,
                 actualHours: true,
                 timeDifference: true,
@@ -1005,12 +1255,13 @@
                 updated: false,
                 qaFailedCount: true,
                 totalBugs: false,
-                openBugs: true
+                openBugs: true,
+                subTaskCount: false
             };
         }
-        
+
         const columnVisibility = getDefaultColumnVisibility();
-        
+
         // Single source of truth for default filter values
         function getDefaultFilters() {
             return {
@@ -1026,38 +1277,40 @@
                 created: '',
                 updated: '',
                 qaFailedCount: '',
+                dueDate: '',
                 totalBugs: '',
-                openBugs: ''
+                openBugs: '',
+                subTaskCount: ''
             };
         }
-        
+
         const filters = getDefaultFilters();
 
         function resetAllSelections() {
             // Reset filters to defaults
             Object.assign(filters, getDefaultFilters());
-            
+
             // Reset column visibility to defaults
             Object.assign(columnVisibility, getDefaultColumnVisibility());
-            
+
             // Reset sort settings
             sortField = null;
             sortDir = 'asc';
-            
+
             // Reset view mode to dashboard (default)
             viewMode = 'dashboard';
-            
+
             // Reset FR filters
             Object.assign(frFilters, getDefaultFRFilters());
-            
-            // Reset widget selections - explicitly set to undefined to ensure they're truly reset
-            window.selectedWorklogDate = undefined;
-            window.selectedWorklogDetailDate = undefined;
-            window.selectedWorklogDetailAssignee = undefined;
-            
+
+            // Reset Dev View specific filters
+            devAssigneeFilters = [];
+            devTypeFilter = ['Story', 'Sub Task', 'Bug'];
+            devStatusFilters = [];
+
             // Close any open dropdowns
             closeDropdowns();
-            
+
             // Clear any filter input fields if they exist in the DOM
             const filterInputs = document.querySelectorAll('#ticketsContainer input[type="text"]');
             filterInputs.forEach(input => {
@@ -1073,24 +1326,24 @@
                 console.error(`Module "${moduleId}" not found in configuration`);
                 return;
             }
-            
+
             activeModule = moduleId;
-            
+
             // Update the select dropdown to reflect the current selection
             const moduleSelect = document.getElementById('moduleSelect');
             if (moduleSelect) {
                 moduleSelect.value = moduleId;
             }
-            
+
             // Reset all user selections to defaults
             resetAllSelections();
-            
+
             // Hide fetch time when switching modules
             const fetchTimeEl = document.getElementById('lastFetchTime');
             if (fetchTimeEl) {
                 fetchTimeEl.textContent = '';
             }
-            
+
             hideError();
             showLoading(false);
             updateStatus('Enter username, password, then click Update');
@@ -1103,7 +1356,7 @@
                 </div>
             `;
             lastTickets = [];
-            
+
             // Only restore login mode if data has never been loaded (initial state)
             // Don't restore login mode when switching modules after data has been loaded
             const mainContainer = document.querySelector('.container');
@@ -1173,10 +1426,10 @@
             } else if (!checked && exists) {
                 filters[key] = arr.filter(v => v !== norm);
             }
-            
+
             // Update table body without re-rendering (which would close the dropdown)
             updateTableBody(lastTickets);
-            
+
             // Update the dropdown button label
             const dropdownBtn = document.getElementById(`dropdown-btn-${field}`);
             if (dropdownBtn) {
@@ -1187,16 +1440,16 @@
         function clearMultiFilter(field, evt) {
             if (evt) evt.stopPropagation();
             filters[`${field}Values`] = [];
-            
+
             // Update table body without re-rendering (which would close the dropdown)
             updateTableBody(lastTickets);
-            
+
             // Update the dropdown button label
             const dropdownBtn = document.getElementById(`dropdown-btn-${field}`);
             if (dropdownBtn) {
                 dropdownBtn.innerHTML = `${dropdownLabel(field)} <span class="caret">▾</span>`;
             }
-            
+
             // Uncheck all checkboxes in the dropdown
             const dropdown = document.getElementById(`dropdown-${field}`);
             if (dropdown) {
@@ -1227,13 +1480,13 @@
                 renderTickets(tickets);
                 return;
             }
-            
+
             // Save dropdown state
             const wasOpen = openDropdown === 'columns';
             const dropdown = document.getElementById('dropdown-columns');
-            
+
             const visibleColumns = columns.filter(c => columnVisibility[c.id]);
-            
+
             // Update header row
             const thead = table.querySelector('thead');
             if (thead) {
@@ -1252,14 +1505,14 @@
                     }).join('');
                     headerRow.innerHTML = headerCells;
                 }
-                
+
                 // Update filter row
                 const filterRow = thead.querySelector('tr:last-child');
                 if (filterRow) {
                     const statusOptions = getUniqueValues(tickets, 'status');
                     const assigneeOptions = getUniqueValues(tickets, 'assignee');
                     const priorityOptions = getUniqueValues(tickets, 'priority');
-                    
+
                     const optionHtml = (opts, selected, field) => opts.map(opt => {
                         const isSel = selected.includes(opt.toLowerCase());
                         const safe = opt.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -1270,7 +1523,7 @@
                             </label>
                         `;
                     }).join('');
-                    
+
                     const filterCells = visibleColumns.map(col => {
                         if (col.id === 'serial') {
                             return `<th class="serial-col">#</th>`;
@@ -1329,6 +1582,9 @@
                         if (col.id === 'storyPoints') {
                             return `<th><input type="text" placeholder="Search story points" oninput="setFilter('storyPoints', this.value, event)" onclick="event.stopPropagation();" value="${filters.storyPoints || ''}"></th>`;
                         }
+                        if (col.id === 'dueDate') {
+                            return `<th><input type="text" placeholder="Search due date" oninput="setFilter('dueDate', this.value, event)" onclick="event.stopPropagation();" value="${filters.dueDate || ''}"></th>`;
+                        }
                         if (col.id === 'timeOriginalEstimate') {
                             return `<th><input type="text" placeholder="Search estimate" oninput="setFilter('timeOriginalEstimate', this.value, event)" onclick="event.stopPropagation();" value="${filters.timeOriginalEstimate || ''}"></th>`;
                         }
@@ -1353,21 +1609,24 @@
                         if (col.id === 'openBugs') {
                             return `<th class="qa-col"><input type="text" placeholder="Search open bugs" oninput="setFilter('openBugs', this.value, event)" onclick="event.stopPropagation();" value="${filters.openBugs || ''}"></th>`;
                         }
+                        if (col.id === 'subTaskCount') {
+                            return `<th class="qa-col"><input type="text" placeholder="Search sub tasks" oninput="setFilter('subTaskCount', this.value, event)" onclick="event.stopPropagation();" value="${filters.subTaskCount || ''}"></th>`;
+                        }
                         return '<th></th>';
                     }).join('');
                     filterRow.innerHTML = filterCells;
                 }
             }
-            
+
             // Update body
             updateTableBody(tickets);
-            
+
             // Update column chooser button label
             const dropdownBtn = document.getElementById('dropdown-btn-columns');
             if (dropdownBtn) {
                 dropdownBtn.innerHTML = `${columnsDropdownLabel()} <span class="caret">▾</span>`;
             }
-            
+
             // Restore dropdown state
             if (wasOpen && dropdown) {
                 dropdown.classList.add('open');
@@ -1420,6 +1679,26 @@
             window.selectedWorklogDate = date;
             if (viewMode === 'dashboard') {
                 renderDashboard(lastTickets);
+            } else if (viewMode === 'worklog') {
+                renderWorklogView(lastTickets);
+            }
+        }
+
+        function updateWorklogToDate(date) {
+            window.worklogToDate = date;
+            if (viewMode === 'dashboard') {
+                renderDashboard(lastTickets);
+            } else if (viewMode === 'worklog') {
+                renderWorklogView(lastTickets);
+            }
+        }
+
+        function updateWorklogDateRangeToggle(checked) {
+            window.useWorklogDateRange = checked;
+            if (viewMode === 'dashboard') {
+                renderDashboard(lastTickets);
+            } else if (viewMode === 'worklog') {
+                renderWorklogView(lastTickets);
             }
         }
 
@@ -1427,6 +1706,26 @@
             window.selectedWorklogDetailDate = date;
             if (viewMode === 'dashboard') {
                 renderDashboard(lastTickets);
+            } else if (viewMode === 'worklog') {
+                renderWorklogView(lastTickets);
+            }
+        }
+
+        function updateWorklogDetailToDate(date) {
+            window.worklogDetailToDate = date;
+            if (viewMode === 'dashboard') {
+                renderDashboard(lastTickets);
+            } else if (viewMode === 'worklog') {
+                renderWorklogView(lastTickets);
+            }
+        }
+
+        function updateWorklogDetailDateRangeToggle(checked) {
+            window.useWorklogDetailDateRange = checked;
+            if (viewMode === 'dashboard') {
+                renderDashboard(lastTickets);
+            } else if (viewMode === 'worklog') {
+                renderWorklogView(lastTickets);
             }
         }
 
@@ -1437,15 +1736,33 @@
             }
         }
 
-        function selectAssigneeForWorklogDetails(assignee, date) {
+        function selectAssigneeForWorklogDetails(assignee, date, toDate, useDateRange) {
             // Set both date and assignee
             window.selectedWorklogDetailDate = date;
             window.selectedWorklogDetailAssignee = assignee;
-            
+
+            // Sync date range settings from Assignee Time Tracking widget
+            if (useDateRange !== undefined && useDateRange !== null) {
+                window.useWorklogDetailDateRange = useDateRange;
+            }
+            if (toDate !== undefined && toDate !== null) {
+                window.worklogDetailToDate = toDate;
+            }
+
             // Re-render dashboard to update Worklog Details widget
             if (viewMode === 'dashboard') {
                 renderDashboard(lastTickets);
-                
+
+                // Scroll to Worklog Details widget after a short delay to ensure it's rendered
+                setTimeout(() => {
+                    const worklogDetailWidget = document.querySelector('.worklog-detail-widget');
+                    if (worklogDetailWidget) {
+                        worklogDetailWidget.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                }, 100);
+            } else if (viewMode === 'worklog') {
+                renderWorklogView(lastTickets);
+
                 // Scroll to Worklog Details widget after a short delay to ensure it's rendered
                 setTimeout(() => {
                     const worklogDetailWidget = document.querySelector('.worklog-detail-widget');
@@ -1460,7 +1777,7 @@
             // Get today's date
             const today = new Date();
             const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-            
+
             // Get all unique assignees
             const allAssignees = new Set();
             tickets.forEach(t => {
@@ -1468,16 +1785,16 @@
                 if (assignee) allAssignees.add(assignee);
             });
             const assigneesList = Array.from(allAssignees).sort();
-            
+
             // Get selected date and assignee (default to today and first assignee)
             // Explicitly check if property exists and is not undefined/null
-            const selectedDate = (window.selectedWorklogDetailDate !== undefined && window.selectedWorklogDetailDate !== null) 
-                ? window.selectedWorklogDetailDate 
+            const selectedDate = (window.selectedWorklogDetailDate !== undefined && window.selectedWorklogDetailDate !== null)
+                ? window.selectedWorklogDetailDate
                 : todayStr;
             const selectedAssignee = (window.selectedWorklogDetailAssignee !== undefined && window.selectedWorklogDetailAssignee !== null)
                 ? window.selectedWorklogDetailAssignee
                 : (assigneesList.length > 0 ? assigneesList[0] : '');
-            
+
             // Initialize if not set
             if (window.selectedWorklogDetailDate === undefined || window.selectedWorklogDetailDate === null) {
                 window.selectedWorklogDetailDate = todayStr;
@@ -1485,45 +1802,71 @@
             if ((window.selectedWorklogDetailAssignee === undefined || window.selectedWorklogDetailAssignee === null) && assigneesList.length > 0) {
                 window.selectedWorklogDetailAssignee = assigneesList[0];
             }
-            
+
+            // Get date range toggle state and to date
+            const useDateRange = window.useWorklogDetailDateRange === true;
+            const toDate = (window.worklogDetailToDate !== undefined && window.worklogDetailToDate !== null)
+                ? window.worklogDetailToDate
+                : todayStr;
+
+            // Initialize if not set
+            if (window.useWorklogDetailDateRange === undefined || window.useWorklogDetailDateRange === null) {
+                window.useWorklogDetailDateRange = false;
+            }
+            if (window.worklogDetailToDate === undefined || window.worklogDetailToDate === null) {
+                window.worklogDetailToDate = todayStr;
+            }
+
             // Get worklog details
-            const worklogDetails = getWorklogDetailsByDateAndAssignee(tickets, selectedDate, selectedAssignee);
-            
+            const worklogDetails = getWorklogDetailsByDateAndAssignee(tickets, selectedDate, selectedAssignee, useDateRange ? toDate : null);
+
             // Build assignee options
-            const assigneeOptions = assigneesList.map(assignee => 
+            const assigneeOptions = assigneesList.map(assignee =>
                 `<option value="${assignee}" ${assignee === selectedAssignee ? 'selected' : ''}>${assignee}</option>`
             ).join('');
-            
+
             // Build worklog detail list
-            const worklogDetailList = worklogDetails.length > 0 
+            const worklogDetailList = worklogDetails.length > 0
                 ? worklogDetails.map(detail => {
                     const ticketKeyDisplay = detail.ticketKey || 'N/A';
-                    const ticketKeyHtml = detail.ticketUrl 
+                    const ticketKeyHtml = detail.ticketUrl
                         ? `<a href="${detail.ticketUrl}" target="_blank" onclick="event.stopPropagation();">${ticketKeyDisplay}</a>`
                         : ticketKeyDisplay;
                     return `
                     <li class="worklog-detail-item">
                         <span class="worklog-detail-time">${formatTimeHoursMinutes(detail.timeSpent)}</span>
                         <span class="worklog-detail-key">${ticketKeyHtml}</span>
+                        <span class="worklog-detail-date">${detail.date || 'N/A'}</span>
                         <span class="worklog-detail-description">${detail.description}</span>
                     </li>
                 `;
                 }).join('')
                 : '<li class="worklog-detail-item"><span class="worklog-detail-description">No worklogs found for this date and assignee.</span></li>';
-            
+
             const totalTime = worklogDetails.reduce((sum, detail) => sum + detail.timeSpent, 0);
             const totalFormatted = formatTimeHoursMinutes(totalTime);
-            
+
             return `
                 <div class="dash-card worklog-detail-widget">
-                    <div class="widget-header">
-                        <h3>Worklog Details</h3>
-                    </div>
+                    <h3>Worklog Details</h3>
                     <div class="worklog-input-container">
                         <div class="worklog-input-group">
-                            <label class="date-picker-label" for="worklogDetailDatePicker">Date:</label>
+                            <label class="date-picker-label" for="worklogDetailDatePicker">From Date:</label>
                             <input type="date" id="worklogDetailDatePicker" class="date-picker-input" value="${selectedDate}" onchange="updateWorklogDetailDate(this.value)">
                         </div>
+                        <div style="display: flex; align-items: center; gap: 8px; padding-bottom: 6px;">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="worklogDetailDateRangeToggle" ${useDateRange ? 'checked' : ''} onchange="updateWorklogDetailDateRangeToggle(this.checked)">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span style="font-size: 14px; font-weight: 600; color: #555;">Date Range</span>
+                        </div>
+                        ${useDateRange ? `
+                        <div class="worklog-input-group">
+                            <label class="date-picker-label" for="worklogDetailToDatePicker">To Date:</label>
+                            <input type="date" id="worklogDetailToDatePicker" class="date-picker-input" value="${toDate}" onchange="updateWorklogDetailToDate(this.value)">
+                        </div>
+                        ` : ''}
                         <div class="worklog-input-group">
                             <label class="date-picker-label" for="worklogDetailAssigneePicker">Assignee:</label>
                             <select id="worklogDetailAssigneePicker" class="worklog-select" onchange="updateWorklogDetailAssignee(this.value)">
@@ -1583,7 +1926,7 @@
                                 'image/png': blob
                             })
                         ]);
-                        
+
                         // Visual feedback - show checkmark
                         if (svg) {
                             svg.outerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="fill: #2e7d32;"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg>';
@@ -1646,7 +1989,7 @@
                                 'image/png': blob
                             })
                         ]);
-                        
+
                         // Visual feedback - show checkmark
                         if (svg) {
                             svg.outerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="fill: #2e7d32;"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg>';
@@ -1709,7 +2052,7 @@
                                 'image/png': blob
                             })
                         ]);
-                        
+
                         // Visual feedback - show checkmark
                         if (svg) {
                             svg.outerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="fill: #2e7d32;"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg>';
@@ -1792,6 +2135,8 @@
                     value = item.priority || '';
                 } else if (col.id === 'storyPoints') {
                     value = typeof item.storyPoints === 'number' ? item.storyPoints : '';
+                } else if (col.id === 'dueDate') {
+                    value = item.dueDate ? formatDueDate(item.dueDate) : '';
                 } else if (col.id === 'timeOriginalEstimate') {
                     value = formatTimeFromSeconds(item.timeOriginalEstimate || 0);
                 } else if (col.id === 'actualHours') {
@@ -1817,6 +2162,8 @@
                     value = typeof item.totalBugs === 'number' ? item.totalBugs : '';
                 } else if (col.id === 'openBugs') {
                     value = typeof item.openBugs === 'number' ? item.openBugs : '';
+                } else if (col.id === 'subTaskCount') {
+                    value = typeof item.subTaskCount === 'number' ? item.subTaskCount : 0;
                 }
             }
             return value;
@@ -1825,31 +2172,48 @@
         // Helper function to generate filter action buttons based on current view
         function getFilterActionsButtons(columnChooser = '') {
             let buttons = [];
-            
+
             // Export button (available in table and FR views)
             if (viewMode === 'table' || viewMode === 'fr') {
                 buttons.push(`<button class="clear-btn" type="button" onclick="exportToCSV()" title="Export to CSV">Export</button>`);
             }
-            
+
             // Column chooser (available in table and FR views)
             if (columnChooser && (viewMode === 'table' || viewMode === 'fr')) {
                 buttons.push(columnChooser);
             }
-            
+
+            // View toggle buttons based on current view
             // View toggle buttons based on current view
             if (viewMode === 'dashboard') {
                 buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('table')">AC View</button>`);
                 buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('fr')">FR View</button>`);
+                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('worklog')">Worklog</button>`);
+                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dev')">Dev View</button>`);
             } else if (viewMode === 'fr') {
                 buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dashboard')">Dashboard</button>`);
                 buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('table')">AC View</button>`);
+                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('worklog')">Worklog</button>`);
+                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dev')">Dev View</button>`);
                 buttons.push(`<button class="clear-btn" type="button" onclick="clearFRFilters()">Clear filters</button>`);
             } else if (viewMode === 'table') {
                 buttons.push(`<button class="clear-btn" type="button" id="dashboardBtn" onclick="toggleDashboard()">Dashboard</button>`);
                 buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('fr')">FR View</button>`);
+                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('worklog')">Worklog</button>`);
+                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dev')">Dev View</button>`);
                 buttons.push(`<button class="clear-btn" type="button" onclick="clearFilters()">Clear filters</button>`);
+            } else if (viewMode === 'worklog') {
+                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dashboard')">Dashboard</button>`);
+                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('table')">AC View</button>`);
+                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('fr')">FR View</button>`);
+                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dev')">Dev View</button>`);
+            } else if (viewMode === 'dev') {
+                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dashboard')">Dashboard</button>`);
+                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('table')">AC View</button>`);
+                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('fr')">FR View</button>`);
+                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('worklog')">Worklog</button>`);
             }
-            
+
             return buttons.join('\n                        ');
         }
 
@@ -1942,10 +2306,10 @@
         // Aggregate FR data from tickets
         function aggregateFRData(tickets) {
             const frMap = {};
-            
+
             tickets.forEach(ticket => {
                 if (!ticket.frId) return;
-                
+
                 if (!frMap[ticket.frId]) {
                     frMap[ticket.frId] = {
                         frId: ticket.frId,
@@ -1955,18 +2319,18 @@
                         frStatus: ''
                     };
                 }
-                
+
                 frMap[ticket.frId].totalTickets++;
-                
+
                 if (ticket.statusCategory === 'Done') {
                     frMap[ticket.frId].doneTickets++;
                 }
             });
-            
+
             // Calculate pending and status for each FR
             Object.values(frMap).forEach(fr => {
                 fr.pendingTickets = fr.totalTickets - fr.doneTickets;
-                
+
                 if (fr.doneTickets === 0) {
                     fr.frStatus = 'Pending';
                 } else if (fr.doneTickets === fr.totalTickets) {
@@ -1975,7 +2339,7 @@
                     fr.frStatus = 'Partially Done';
                 }
             });
-            
+
             return Object.values(frMap);
         }
 
@@ -1985,10 +2349,10 @@
                 const totalTickets = String(fr.totalTickets || 0).toLowerCase().includes(frFilters.totalTickets.toLowerCase());
                 const doneTickets = String(fr.doneTickets || 0).toLowerCase().includes(frFilters.doneTickets.toLowerCase());
                 const pendingTickets = String(fr.pendingTickets || 0).toLowerCase().includes(frFilters.pendingTickets.toLowerCase());
-                
+
                 const statusValue = (fr.frStatus || '').toLowerCase();
                 const status = frFilters.frStatusValues.length === 0 || frFilters.frStatusValues.includes(statusValue);
-                
+
                 return frId && totalTickets && doneTickets && pendingTickets && status;
             });
 
@@ -2034,7 +2398,7 @@
             if (viewMode === 'fr') {
                 updateFRTableBody(lastTickets);
             }
-            
+
             // Update the dropdown button label
             const dropdownBtn = document.getElementById(`dropdown-btn-${field}`);
             if (dropdownBtn) {
@@ -2048,13 +2412,13 @@
             if (viewMode === 'fr') {
                 updateFRTableBody(lastTickets);
             }
-            
+
             // Update the dropdown button label
             const dropdownBtn = document.getElementById(`dropdown-btn-${field}`);
             if (dropdownBtn) {
                 dropdownBtn.innerHTML = `${frDropdownLabel(field)} <span class="caret">▾</span>`;
             }
-            
+
             // Uncheck all checkboxes in the dropdown
             const dropdown = document.getElementById(`dropdown-${field}`);
             if (dropdown) {
@@ -2085,13 +2449,13 @@
                 renderFRView(tickets);
                 return;
             }
-            
+
             // Save dropdown state
             const wasOpen = openDropdown === 'frColumns';
             const dropdown = document.getElementById('dropdown-frColumns');
-            
+
             const visibleColumns = frColumns.filter(c => frColumnVisibility[c.id]);
-            
+
             // Update header row
             const thead = table.querySelector('thead');
             if (thead) {
@@ -2110,12 +2474,12 @@
                     }).join('');
                     headerRow.innerHTML = headerCells;
                 }
-                
+
                 // Update filter row
                 const filterRow = thead.querySelector('tr:last-child');
                 if (filterRow) {
                     const statusOptions = ['Done', 'Pending', 'Partially Done'];
-                    
+
                     const optionHtml = (opts, selected, field) => opts.map(opt => {
                         const isSel = selected.includes(opt.toLowerCase());
                         const safe = opt.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
@@ -2126,7 +2490,7 @@
                             </label>
                         `;
                     }).join('');
-                    
+
                     const filterCells = visibleColumns.map(col => {
                         if (col.id === 'serial') {
                             return `<th class="serial-col">#</th>`;
@@ -2163,16 +2527,16 @@
                     filterRow.innerHTML = filterCells;
                 }
             }
-            
+
             // Update body
             updateFRTableBody(tickets);
-            
+
             // Update column chooser button label
             const dropdownBtn = document.getElementById('dropdown-btn-frColumns');
             if (dropdownBtn) {
                 dropdownBtn.innerHTML = `${frColumnsDropdownLabel()} <span class="caret">▾</span>`;
             }
-            
+
             // Restore dropdown state
             if (wasOpen && dropdown) {
                 dropdown.classList.add('open');
@@ -2225,6 +2589,34 @@
             renderTickets(lastTickets);
         }
 
+        function resetDevViewFilters() {
+            const initialAssigneeSet = new Set();
+            const initialStatusSet = new Set();
+
+            (lastTickets || []).forEach(t => {
+                initialAssigneeSet.add(t.assignee || 'Unassigned');
+                initialStatusSet.add(t.status);
+                (t.linkedBugs || []).forEach(b => {
+                    initialAssigneeSet.add(b.assignee || 'Unassigned');
+                    initialStatusSet.add(b.status);
+                });
+            });
+            (lastDevSubtasks || []).forEach(t => {
+                initialAssigneeSet.add(t.assignee || 'Unassigned');
+                initialStatusSet.add(t.status);
+                (t.linkedBugs || []).forEach(b => {
+                    initialAssigneeSet.add(b.assignee || 'Unassigned');
+                    initialStatusSet.add(b.status);
+                });
+            });
+
+            devAssigneeFilters = Array.from(initialAssigneeSet);
+            devStatusFilters = Array.from(initialStatusSet);
+            devTypeFilter = ['Story', 'Sub Task', 'Bug'];
+
+            renderPostResults();
+        }
+
         function getUniqueValues(tickets, field) {
             const set = new Set();
             (tickets || []).forEach(t => {
@@ -2259,18 +2651,20 @@
                 const timeDiff = timeDiffFormatted.toLowerCase().includes(filters.timeDifference);
                 const created = (t.created || '').toLowerCase().includes(filters.created);
                 const updated = (t.updated || '').toLowerCase().includes(filters.updated);
+                const dueDate = (t.dueDate ? formatDueDate(t.dueDate) : '').toLowerCase().includes(filters.dueDate);
                 const qaFailed = String(typeof t.qaFailedCount === 'number' ? t.qaFailedCount : '').toLowerCase().includes(filters.qaFailedCount);
                 const totalBugs = String(typeof t.totalBugs === 'number' ? t.totalBugs : '').toLowerCase().includes(filters.totalBugs);
                 const openBugs = String(typeof t.openBugs === 'number' ? t.openBugs : '').toLowerCase().includes(filters.openBugs);
-                return key && summary && status && assignee && priority && storyPoints && timeEstimate && actualHrs && timeDiff && created && updated && qaFailed && totalBugs && openBugs;
+                const subTaskCount = String(typeof t.subTaskCount === 'number' ? t.subTaskCount : 0).toLowerCase().includes(filters.subTaskCount);
+                return key && summary && status && assignee && priority && storyPoints && timeEstimate && actualHrs && timeDiff && created && updated && dueDate && qaFailed && totalBugs && openBugs && subTaskCount;
             });
 
             if (!sortField) return filtered;
 
             const dir = sortDir === 'asc' ? 1 : -1;
             return filtered.slice().sort((a, b) => {
-                // Handle numeric fields (storyPoints, qaFailedCount, timeOriginalEstimate, actualHours, timeDifference, totalBugs, openBugs)
-                if (sortField === 'storyPoints' || sortField === 'qaFailedCount' || sortField === 'timeOriginalEstimate' || sortField === 'actualHours' || sortField === 'timeDifference' || sortField === 'totalBugs' || sortField === 'openBugs') {
+                // Handle numeric fields (storyPoints, qaFailedCount, timeOriginalEstimate, actualHours, timeDifference, totalBugs, openBugs, subTaskCount)
+                if (sortField === 'storyPoints' || sortField === 'qaFailedCount' || sortField === 'timeOriginalEstimate' || sortField === 'actualHours' || sortField === 'timeDifference' || sortField === 'totalBugs' || sortField === 'openBugs' || sortField === 'subTaskCount') {
                     let va, vb;
                     if (sortField === 'timeDifference') {
                         // Calculate difference for sorting
@@ -2310,6 +2704,12 @@
                 if (columnVisibility.assignee) cells.push(`<td>${ticket.assignee || ''}</td>`);
                 if (columnVisibility.priority) cells.push(`<td>${ticket.priority || ''}</td>`);
                 if (columnVisibility.storyPoints) cells.push(`<td>${typeof ticket.storyPoints === 'number' ? ticket.storyPoints : ''}</td>`);
+                if (columnVisibility.dueDate) {
+                    const formattedDueDate = ticket.dueDate ? formatDueDate(ticket.dueDate) : '';
+                    const isOverdue = formattedDueDate.startsWith('+ ');
+                    const dueDateClass = isOverdue ? ' class="due-date-overdue"' : '';
+                    cells.push(`<td${dueDateClass}>${formattedDueDate}</td>`);
+                }
                 if (columnVisibility.timeOriginalEstimate) cells.push(`<td>${formatTimeFromSeconds(ticket.timeOriginalEstimate || 0)}</td>`);
                 if (columnVisibility.actualHours) cells.push(`<td>${formatTimeFromSeconds(ticket.actualHours || 0)}</td>`);
                 if (columnVisibility.timeDifference) cells.push(`<td>${formatTimeDifference(ticket.timeOriginalEstimate, ticket.actualHours)}</td>`);
@@ -2318,6 +2718,7 @@
                 if (columnVisibility.qaFailedCount) cells.push(`<td>${typeof ticket.qaFailedCount === 'number' ? ticket.qaFailedCount : ''}</td>`);
                 if (columnVisibility.totalBugs) cells.push(`<td>${typeof ticket.totalBugs === 'number' ? ticket.totalBugs : ''}</td>`);
                 if (columnVisibility.openBugs) cells.push(`<td>${typeof ticket.openBugs === 'number' ? ticket.openBugs : ''}</td>`);
+                if (columnVisibility.subTaskCount) cells.push(`<td>${typeof ticket.subTaskCount === 'number' ? ticket.subTaskCount : ''}</td>`);
                 return `<tr onclick="window.open('${ticket.url || '#'}', '_blank')" style="cursor:pointer;">${cells.join('')}</tr>`;
             }).join('');
         }
@@ -2331,10 +2732,10 @@
             }
             const tbody = table.querySelector('tbody');
             if (!tbody) return;
-            
+
             const frData = aggregateFRData(tickets || []);
             const filteredAndSorted = applyFRFiltersAndSort(frData);
-            
+
             tbody.innerHTML = filteredAndSorted.map((fr, idx) => {
                 const cells = [];
                 if (frColumnVisibility.serial) cells.push(`<td class="serial-col">${idx + 1}</td>`);
@@ -2347,7 +2748,8 @@
                 const frId = fr.frId || '';
                 let rowAttrs = '';
                 if (frId && frId !== 'N/A') {
-                    const jqlQuery = `cf[10049] = "${frId}"`;
+                    const parent = modules[activeModule].emId;
+                    const jqlQuery = `cf[10049] = "${frId}" AND parent = ${parent}`;
                     const encodedJql = encodeURIComponent(jqlQuery);
                     const jiraUrl = `https://cardyai-hawaii.atlassian.net/issues/?jql=${encodedJql}`;
                     rowAttrs = `onclick="window.open('${jiraUrl}', '_blank')" style="cursor:pointer;"`;
@@ -2392,10 +2794,72 @@
             if (!dateString) return 'N/A';
             try {
                 const date = new Date(dateString);
-                return date.toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric' 
+                return date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        function formatDueDate(dateString) {
+            if (!dateString) return '';
+            try {
+                const dueDate = new Date(dateString);
+                const today = new Date();
+                // Set time to midnight for accurate date comparison
+                today.setHours(0, 0, 0, 0);
+                dueDate.setHours(0, 0, 0, 0);
+
+                const year = dueDate.getFullYear();
+                const month = String(dueDate.getMonth() + 1).padStart(2, '0');
+                const day = String(dueDate.getDate()).padStart(2, '0');
+                const formattedDate = `${year}/${month}/${day}`;
+
+                // If current date is greater than due date, add "+" prefix
+                if (today > dueDate) {
+                    return `+ ${formattedDate}`;
+                }
+                return formattedDate;
+            } catch (e) {
+                return dateString;
+            }
+        }
+
+        function getMonday(d) {
+            d = new Date(d);
+            var day = d.getDay(),
+                diff = d.getDate() - day + (day == 0 ? -6 : 1); // adjust when day is sunday
+            const monday = new Date(d.setDate(diff));
+            monday.setHours(0, 0, 0, 0);
+            return monday;
+        }
+
+        function getWeekRangeLabel(dateString) {
+            if (!dateString) return 'No due dates';
+            try {
+                const d = new Date(dateString);
+                if (isNaN(d.getTime())) return 'No due dates';
+                const monday = getMonday(d);
+                const sunday = new Date(monday);
+                sunday.setDate(monday.getDate() + 6);
+
+                const options = { month: 'short', day: 'numeric' };
+                return `${monday.toLocaleDateString('en-US', options)} to ${sunday.toLocaleDateString('en-US', options)}`;
+            } catch (e) {
+                return 'No due dates';
+            }
+        }
+
+        function formatWorklogDate(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric'
                 });
             } catch (e) {
                 return dateString;
@@ -2405,42 +2869,42 @@
         function formatTimeFromSeconds(seconds) {
             if (typeof seconds !== 'number' || isNaN(seconds)) return '';
             if (seconds === 0) return '0h';
-            
+
             // Custom conversions: 60m = 1h, 8h = 1d, 5d = 1w
             const SECONDS_PER_MINUTE = 60;
             const SECONDS_PER_HOUR = 60 * SECONDS_PER_MINUTE; // 3600
             const SECONDS_PER_DAY = 8 * SECONDS_PER_HOUR; // 28800 (8 hours = 1 day)
             const SECONDS_PER_WEEK = 5 * SECONDS_PER_DAY; // 144000 (5 days = 1 week)
-            
+
             const weeks = Math.floor(seconds / SECONDS_PER_WEEK);
             const days = Math.floor((seconds % SECONDS_PER_WEEK) / SECONDS_PER_DAY);
             const hours = Math.floor((seconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR);
             const minutes = Math.floor((seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE);
-            
+
             const parts = [];
             if (weeks > 0) parts.push(`${weeks}w`);
             if (days > 0) parts.push(`${days}d`);
             if (hours > 0) parts.push(`${hours}h`);
             if (minutes > 0) parts.push(`${minutes}m`);
-            
+
             return parts.length > 0 ? parts.join(' ') : '0h';
         }
 
         function formatTimeHoursMinutes(seconds) {
             if (typeof seconds !== 'number' || isNaN(seconds)) return '';
             if (seconds === 0) return '0h';
-            
+
             // Standard conversions: 60m = 1h (no days or weeks)
             const SECONDS_PER_MINUTE = 60;
             const SECONDS_PER_HOUR = 60 * SECONDS_PER_MINUTE; // 3600
-            
+
             const hours = Math.floor(seconds / SECONDS_PER_HOUR);
             const minutes = Math.floor((seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE);
-            
+
             const parts = [];
             if (hours > 0) parts.push(`${hours}h`);
             if (minutes > 0) parts.push(`${minutes}m`);
-            
+
             return parts.length > 0 ? parts.join(' ') : '0h';
         }
 
@@ -2448,18 +2912,18 @@
             if (estimate === null || estimate === undefined || actual === null || actual === undefined) {
                 return '';
             }
-            
+
             const estimateSeconds = typeof estimate === 'number' ? estimate : 0;
             const actualSeconds = typeof actual === 'number' ? actual : 0;
             const difference = actualSeconds - estimateSeconds;
-            
+
             if (difference === 0) {
                 return '';
             }
-            
+
             const absDifference = Math.abs(difference);
             const formatted = formatTimeFromSeconds(absDifference);
-            
+
             if (difference > 0) {
                 return `<span class="time-diff-positive">+${formatted}</span>`;
             } else {
@@ -2489,28 +2953,35 @@
             return 'Other';
         }
 
-        function getWorklogsByDate(tickets, selectedDate) {
+        function getWorklogsByDate(tickets, selectedDate, toDate) {
             if (!selectedDate) return {};
-            
+
             const assigneeTimeMap = {};
             // selectedDate is in YYYY-MM-DD format
             const selectedDateStr = selectedDate;
-            
+            const toDateStr = toDate || selectedDate; // If no toDate, use selectedDate (single date mode)
+
+            // Convert to Date objects for comparison
+            const fromDateObj = new Date(selectedDateStr);
+            const toDateObj = new Date(toDateStr);
+            toDateObj.setHours(23, 59, 59, 999); // Include the entire end date
+
             tickets.forEach(ticket => {
                 if (!ticket.worklog || !ticket.worklog.worklogs) return;
-                
+
                 ticket.worklog.worklogs.forEach(worklog => {
                     if (!worklog.started || !worklog.timeSpentSeconds || !worklog.author) return;
-                    
+
                     // Parse the started date - format: "2025-12-11T14:00:00.000+0530"
                     // Extract just the date part (YYYY-MM-DD) from the ISO string
                     const worklogDateStr = worklog.started.split('T')[0];
-                    
-                    // Check if worklog is for the selected date
-                    if (worklogDateStr === selectedDateStr) {
+                    const worklogDateObj = new Date(worklogDateStr);
+
+                    // Check if worklog is within the date range (inclusive)
+                    if (worklogDateObj >= fromDateObj && worklogDateObj <= toDateObj) {
                         const assigneeName = worklog.author.displayName || 'Unknown';
                         const timeSpent = worklog.timeSpentSeconds || 0;
-                        
+
                         if (!assigneeTimeMap[assigneeName]) {
                             assigneeTimeMap[assigneeName] = 0;
                         }
@@ -2518,15 +2989,15 @@
                     }
                 });
             });
-            
+
             return assigneeTimeMap;
         }
 
         function extractTextFromComment(comment) {
             if (!comment || !comment.content) return '';
-            
+
             let text = '';
-            
+
             function extractFromContent(content) {
                 if (Array.isArray(content)) {
                     content.forEach(item => {
@@ -2538,44 +3009,54 @@
                     });
                 }
             }
-            
+
             extractFromContent(comment.content);
             return text.trim();
         }
 
-        function getWorklogDetailsByDateAndAssignee(tickets, selectedDate, selectedAssignee) {
+        function getWorklogDetailsByDateAndAssignee(tickets, selectedDate, selectedAssignee, toDate) {
             if (!selectedDate || !selectedAssignee) return [];
-            
+
             const worklogDetails = [];
             const selectedDateStr = selectedDate;
-            
+            const toDateStr = toDate || selectedDate; // If no toDate, use selectedDate (single date mode)
+
+            // Convert to Date objects for comparison
+            const fromDateObj = new Date(selectedDateStr);
+            const toDateObj = new Date(toDateStr);
+            toDateObj.setHours(23, 59, 59, 999); // Include the entire end date
+
             tickets.forEach(ticket => {
                 if (!ticket.worklog || !ticket.worklog.worklogs) return;
-                
+
                 ticket.worklog.worklogs.forEach(worklog => {
                     if (!worklog.started || !worklog.timeSpentSeconds || !worklog.author) return;
-                    
+
                     const worklogDateStr = worklog.started.split('T')[0];
+                    const worklogDateObj = new Date(worklogDateStr);
                     const assigneeName = worklog.author.displayName || 'Unknown';
-                    
-                    // Check if worklog matches selected date and assignee
-                    if (worklogDateStr === selectedDateStr && assigneeName === selectedAssignee) {
+
+                    // Check if worklog matches selected date range and assignee
+                    if (worklogDateObj >= fromDateObj && worklogDateObj <= toDateObj && assigneeName === selectedAssignee) {
                         const description = extractTextFromComment(worklog.comment) || 'No description';
+                        // Format date as "Dec 10"
+                        const formattedDate = formatWorklogDate(worklogDateStr);
                         worklogDetails.push({
                             timeSpent: worklog.timeSpentSeconds,
                             timeSpentFormatted: worklog.timeSpent || formatTimeHoursMinutes(worklog.timeSpentSeconds),
                             description: description,
                             ticketKey: ticket.key,
                             ticketUrl: ticket.url,
-                            started: worklog.started
+                            started: worklog.started,
+                            date: formattedDate
                         });
                     }
                 });
             });
-            
+
             // Sort by started time (most recent first)
             worklogDetails.sort((a, b) => new Date(b.started) - new Date(a.started));
-            
+
             return worklogDetails;
         }
 
@@ -2676,49 +3157,25 @@
                 })
                 .join('');
 
-            // Get today's date in YYYY-MM-DD format for default date picker (using local date)
-            const today = new Date();
-            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-            
-            // Get worklogs for selected date (default to today)
-            // Explicitly check if property exists and is not undefined/null
-            const selectedDate = (window.selectedWorklogDate !== undefined && window.selectedWorklogDate !== null)
-                ? window.selectedWorklogDate
-                : todayStr;
-            
-            // Initialize window.selectedWorklogDate if not set
-            if (window.selectedWorklogDate === undefined || window.selectedWorklogDate === null) {
-                window.selectedWorklogDate = todayStr;
-            }
-            const assigneeTimeMap = getWorklogsByDate(tickets, selectedDate);
-            
-            // Get all unique assignees from tickets and merge with worklog data
-            // This ensures all assignees are shown, even if they have 0 logged hours
-            const allAssigneesMap = {};
+            // Calculate Assignee (Story Points)
+            const assigneeSP = {};
+            let totalSP = 0;
             tickets.forEach(t => {
                 const assignee = (t.assignee || 'Unassigned').trim();
-                if (assignee && !allAssigneesMap[assignee]) {
-                    allAssigneesMap[assignee] = assigneeTimeMap[assignee] || 0;
-                }
+                const sp = typeof t.storyPoints === 'number' ? t.storyPoints : 0;
+                assigneeSP[assignee] = (assigneeSP[assignee] || 0) + sp;
+                totalSP += sp;
             });
-            
-            // Sort assignees by time spent (descending)
-            // 8 hours = 8 * 3600 = 28800 seconds
-            const EIGHT_HOURS_IN_SECONDS = 8 * 3600;
-            const assigneeTimeList = Object.entries(allAssigneesMap)
+
+            const assigneeSPList = Object.entries(assigneeSP)
                 .sort((a, b) => b[1] - a[1])
-                .map(([assignee, totalSeconds]) => {
-                    const formatted = formatTimeHoursMinutes(totalSeconds);
-                    // Apply red color if less than 8 hours
-                    const timeClass = totalSeconds < EIGHT_HOURS_IN_SECONDS ? 'time-low-hours' : '';
-                    // Escape assignee for use in onclick
-                    const safeAssignee = assignee.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                    return `<li class="clickable" onclick="selectAssigneeForWorklogDetails('${safeAssignee}', '${selectedDate}')"><span>${assignee}</span><span class="${timeClass}">${formatted}</span></li>`;
+                .map(([k, v]) => {
+                    const percentage = totalSP > 0 ? ((v / totalSP) * 100).toFixed(1) : '0.0';
+                    return `<li><span>${k}</span><span>${v} (${percentage}%)</span></li>`;
                 })
                 .join('');
-            
-            const totalTimeSpent = Object.values(allAssigneesMap).reduce((sum, seconds) => sum + seconds, 0);
-            const totalFormatted = formatTimeHoursMinutes(totalTimeSpent);
+
+
 
             // Calculate FR Status counts - dynamically from available FR data
             const frData = aggregateFRData(tickets);
@@ -2763,7 +3220,8 @@
                     </div>
                     <div class="dash-card">
                         <div class="widget-header">
-                            <h3>Assignee</h3>
+                            <h3>Assignee (ACs Count)</h3>
+                            <span class="section-count" style="font-weight: 700;">${totalTickets}</span>
                         </div>
                         <ul class="dash-list">
                             ${assigneeList || '<li><span>None</span><span>0 (0.0%)</span></li>'}
@@ -2771,10 +3229,11 @@
                     </div>
                     <div class="dash-card">
                         <div class="widget-header">
-                            <h3>QA Loop</h3>
+                            <h3>Assignee ACs (Story Points)</h3>
+                            <span class="section-count" style="font-weight: 700;">${totalSP % 1 === 0 ? totalSP : totalSP.toFixed(1)}</span>
                         </div>
                         <ul class="dash-list">
-                            ${qaFailedList || '<li><span>0</span><span>0 tickets (0.0%)</span></li>'}
+                            ${assigneeSPList || '<li><span>None</span><span>0 (0.0%)</span></li>'}
                         </ul>
                     </div>
                     <div class="dash-card" id="frStatusWidget">
@@ -2790,6 +3249,94 @@
                             ${frStatusList || '<li><span>No FRs</span><span>0 (0.0%)</span></li>'}
                         </ul>
                     </div>
+                    <div class="dash-card">
+                        <h3>QA Loop</h3>
+                        <ul class="dash-list">
+                            ${qaFailedList || '<li><span>0</span><span>0 tickets (0.0%)</span></li>'}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderWorklogView(tickets) {
+            const container = document.getElementById('ticketsContainer');
+            if (!tickets || tickets.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h2>No tickets found</h2>
+                        <p>No Jira tickets were returned from the API</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Calculate worklog data
+            const selectedDate = window.selectedWorklogDate || new Date().toISOString().split('T')[0];
+            const toDate = window.worklogToDate || selectedDate;
+            const useDateRange = window.useWorklogDateRange || false;
+
+            const assigneeTime = {};
+            let totalSeconds = 0;
+
+            // Initialize all unique assignees with 0 time
+            tickets.forEach(t => {
+                const assignee = (t.assignee || 'Unassigned').trim();
+                // Ensure we have an entry for every assignee, even if they have no worklogs
+                if (assignee && !assigneeTime.hasOwnProperty(assignee)) {
+                    assigneeTime[assignee] = 0;
+                }
+            });
+
+            tickets.forEach(ticket => {
+                const worklog = ticket.worklog;
+                if (!worklog || !worklog.worklogs || worklog.worklogs.length === 0) return;
+
+                worklog.worklogs.forEach(entry => {
+                    const entryDate = entry.started ? entry.started.split('T')[0] : '';
+                    const timeSpent = entry.timeSpentSeconds || 0;
+
+                    if (useDateRange) {
+                        if (entryDate >= selectedDate && entryDate <= toDate) {
+                            const author = entry.author?.displayName || 'Unknown';
+                            assigneeTime[author] = (assigneeTime[author] || 0) + timeSpent;
+                            totalSeconds += timeSpent;
+                        }
+                    } else {
+                        if (entryDate === selectedDate) {
+                            const author = entry.author?.displayName || 'Unknown';
+                            assigneeTime[author] = (assigneeTime[author] || 0) + timeSpent;
+                            totalSeconds += timeSpent;
+                        }
+                    }
+                });
+            });
+
+            const totalFormatted = formatTimeHoursMinutes(totalSeconds);
+            const assigneeTimeList = Object.entries(assigneeTime)
+                .sort((a, b) => b[1] - a[1])
+                .map(([k, v]) => {
+                    const formatted = formatTimeHoursMinutes(v);
+                    const safeAssignee = k.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    const safeToDate = (useDateRange && toDate) ? toDate.replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+                    const dateRangeParam = useDateRange ? `, '${safeToDate}', true` : `, null, false`;
+
+                    // Apply red color if less than 8 hours AND date range toggle is OFF
+                    const EIGHT_HOURS_IN_SECONDS = 8 * 3600;
+                    const timeClass = (!useDateRange && v < EIGHT_HOURS_IN_SECONDS) ? 'time-low-hours' : '';
+
+                    return `<li class="clickable" onclick="selectAssigneeForWorklogDetails('${safeAssignee}', '${selectedDate}'${dateRangeParam})"><span>${k}</span><span class="${timeClass}">${formatted}</span></li>`;
+                })
+                .join('');
+
+            // Render worklog detail widget content
+            const worklogDetailWidget = renderWorklogDetailWidget(tickets);
+
+            container.innerHTML = `
+                <div class="filter-actions">
+                    ${getFilterActionsButtons()}
+                </div>
+                <div class="dash-grid">
                     <div class="dash-card time-tracking-widget" id="assigneeTimeTrackingWidget">
                         <div class="widget-header">
                             <h3>Assignee Time Tracking</h3>
@@ -2800,8 +3347,26 @@
                             </button>
                         </div>
                         <div class="date-picker-container">
-                            <label class="date-picker-label" for="worklogDatePicker">Date:</label>
-                            <input type="date" id="worklogDatePicker" class="date-picker-input" value="${selectedDate}" onchange="updateWorklogDate(this.value)">
+                            <div class="worklog-input-group" style="min-width: auto;">
+                                <label class="date-picker-label" for="worklogDatePicker">From Date:</label>
+                                <input type="date" id="worklogDatePicker" class="date-picker-input" value="${selectedDate}" onchange="updateWorklogDate(this.value)">
+                            </div>
+                            <div class="worklog-input-group" style="min-width: auto; justify-content: flex-end;">
+                                <label class="date-picker-label" style="visibility: hidden;">Placeholder</label>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="worklogDateRangeToggle" ${useDateRange ? 'checked' : ''} onchange="updateWorklogDateRangeToggle(this.checked)">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span style="font-size: 14px; font-weight: 600; color: #555;">Date Range</span>
+                                </div>
+                            </div>
+                            ${useDateRange ? `
+                            <div class="worklog-input-group" style="min-width: auto;">
+                                <label class="date-picker-label" for="worklogToDatePicker">To Date:</label>
+                                <input type="date" id="worklogToDatePicker" class="date-picker-input" value="${toDate}" onchange="updateWorklogToDate(this.value)">
+                            </div>
+                            ` : ''}
                         </div>
                         <div class="dash-section">
                             <div class="dash-section-title">
@@ -2813,9 +3378,724 @@
                             ${assigneeTimeList || '<li><span>No time logged</span><span>0m</span></li>'}
                         </ul>
                     </div>
-                    ${renderWorklogDetailWidget(tickets)}
+                    ${worklogDetailWidget}
                 </div>
             `;
+        }
+
+        // --- DEV VIEW LOGIC ---
+
+        function renderDevView(tickets) {
+            const container = document.getElementById('ticketsContainer');
+            container.innerHTML = `
+                <div class="filter-actions">
+                    ${getFilterActionsButtons()}
+                </div>
+                <div class="dev-view-container" style="padding: 20px;">
+                    <div style="margin-bottom: 20px;">
+                         <button class="primary-btn" onclick="fetchDevTicketsPost()">
+                            <span class="btn-icon">⚡</span>Fetch Dev Tickets
+                        </button>
+                    </div>
+                    <div id="devResultsContainer">
+                        <div class="empty-state">
+                            <p>Click Fetch Dev Tickets to fetch data</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function fetchDevTicketsPost() {
+            const devContainer = document.getElementById('devResultsContainer');
+            if (!devContainer) return;
+
+            // Extract subtask keys from currently loaded tickets
+            if (!lastTickets || lastTickets.length === 0) {
+                devContainer.innerHTML = '<div class="empty-state">No tickets loaded to fetch subtasks from.</div>';
+                return;
+            }
+
+            const keys = lastTickets.flatMap(t => t.subtaskKeys || []);
+
+            if (keys.length === 0) {
+                // If no subtasks, just clear subtasks and render what we have (Stories and their linked bugs)
+                lastDevSubtasks = [];
+                const initialAssigneeSet = new Set();
+                (lastTickets || []).forEach(t => {
+                    initialAssigneeSet.add(t.assignee || 'Unassigned');
+                    (t.linkedBugs || []).forEach(b => initialAssigneeSet.add(b.assignee || 'Unassigned'));
+                });
+                devAssigneeFilters = Array.from(initialAssigneeSet);
+                renderPostResults();
+                return;
+            }
+
+            showLoading(true);
+            devContainer.innerHTML = '<div class="loading-state">Fetching..</div>';
+
+            try {
+                // Construct URL (using centralized SCRIPT_URL)
+                const email = savedEmail || document.getElementById('emailInput').value;
+                const apiToken = savedApiToken || document.getElementById('tokenInput').value;
+
+                if (!email || !apiToken) {
+                    throw new Error("Missing credentials. Please ensure you are logged in.");
+                }
+
+                // Parent and Sprint info for GET requests
+                const currentModule = modules[activeModule];
+                const parent = currentModule.emId;
+                const sprintId = currentModule.sprintId;
+
+                // Construct concurrent requests
+                const subtaskUrl = `${SCRIPT_URL}?email=${encodeURIComponent(email)}&apiToken=${encodeURIComponent(apiToken)}&requestType=post_search`;
+                const subtaskPayload = {
+                    requestType: 'post_search',
+                    email: email,
+                    apiToken: apiToken,
+                    keys: keys
+                };
+
+                const bugsUrl = `${SCRIPT_URL}?email=${encodeURIComponent(email)}&apiToken=${encodeURIComponent(apiToken)}&requestType=fetch_bugs&parent=${encodeURIComponent(parent)}&sprintId=${encodeURIComponent(sprintId)}&maxResults=500`;
+                const bugsPayload = {
+                    requestType: 'fetch_bugs',
+                    email: email,
+                    apiToken: apiToken,
+                    parent: parent,
+                    sprintId: sprintId
+                };
+
+                const [subtaskResp, bugsResp] = await Promise.all([
+                    fetch(subtaskUrl, { method: 'POST', body: JSON.stringify(subtaskPayload) }),
+                    fetch(bugsUrl, { method: 'POST', body: JSON.stringify(bugsPayload) })
+                ]);
+
+                const subtaskData = await subtaskResp.json();
+                const bugsData = await bugsResp.json();
+
+                if (!subtaskData.success) {
+                    throw new Error(subtaskData.error || 'Subtask fetch failed');
+                }
+                if (!bugsData.success) {
+                    console.warn("Bugs detailed fetch failed:", bugsData.error);
+                }
+
+                // Store data
+                lastDevSubtasks = subtaskData.tickets || [];
+                lastDevBugsDetailed = bugsData.tickets || [];
+
+                // key: Initialize filters with all assignees and statuses from parents AND fetched subtasks (and their bugs)
+                const initialAssigneeSet = new Set();
+                const initialStatusSet = new Set();
+
+                (lastTickets || []).forEach(t => {
+                    initialAssigneeSet.add(t.assignee || 'Unassigned');
+                    initialStatusSet.add(t.status);
+                    (t.linkedBugs || []).forEach(b => {
+                        // Supplement linked bug with detailed info if available
+                        const bugDetail = lastDevBugsDetailed.find(bd => bd.key === b.key);
+                        if (bugDetail) {
+                            b.assignee = bugDetail.assignee;
+                            b.dueDate = bugDetail.dueDate;
+                        }
+                        initialAssigneeSet.add(b.assignee || 'Unassigned');
+                        initialStatusSet.add(b.status);
+                    });
+                });
+                (lastDevSubtasks || []).forEach(t => {
+                    initialAssigneeSet.add(t.assignee || 'Unassigned');
+                    initialStatusSet.add(t.status);
+                    (t.linkedBugs || []).forEach(b => {
+                        // Supplement linked bug with detailed info if available
+                        const bugDetail = lastDevBugsDetailed.find(bd => bd.key === b.key);
+                        if (bugDetail) {
+                            b.assignee = bugDetail.assignee;
+                            b.dueDate = bugDetail.dueDate;
+                        }
+                        initialAssigneeSet.add(b.assignee || 'Unassigned');
+                        initialStatusSet.add(b.status);
+                    });
+                });
+
+                devAssigneeFilters = Array.from(initialAssigneeSet); // Select all by default
+                devStatusFilters = Array.from(initialStatusSet); // Select all by default
+
+                renderPostResults();
+
+            } catch (error) {
+                console.error("Dev POST Error:", error);
+                devContainer.innerHTML = `<div class="error-msg">Error: ${error.message}</div>`;
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderPostResults() {
+            const devContainer = document.getElementById('devResultsContainer');
+
+            // Consolidate only bugs that are linked to stories (or their sub-tasks) of this sprint
+            const bugMap = new Map();
+            const storyKeys = new Set((lastTickets || []).map(t => t.key));
+
+            // 1. Collect from Stories (both issuelinks and parent/child relation)
+            (lastTickets || []).forEach(p => {
+                // Issuelinks
+                (p.linkedBugs || []).forEach(b => {
+                    const detail = (lastDevBugsDetailed || []).find(d => d.key === b.key);
+                    bugMap.set(b.key, detail || b);
+                });
+            });
+
+            // 2. Collect from Sub-tasks (issuelinks)
+            (lastDevSubtasks || []).forEach(st => {
+                (st.linkedBugs || []).forEach(b => {
+                    const detail = (lastDevBugsDetailed || []).find(d => d.key === b.key);
+                    bugMap.set(b.key, detail || b);
+                });
+            });
+
+            // 3. Collect from Detailed list (parent relation - bugs that are children of stories)
+            (lastDevBugsDetailed || []).forEach(b => {
+                if (b.parentKey && storyKeys.has(b.parentKey)) {
+                    if (!bugMap.has(b.key)) bugMap.set(b.key, b);
+                }
+            });
+
+            const allPossibleBugs = Array.from(bugMap.values());
+
+            // Create global maps for expansion context (all children, unfiltered)
+            const subtaskMapByParent = {};
+            (lastDevSubtasks || []).forEach(st => {
+                const pk = st.parentKey || (st.parent ? st.parent.key : null);
+                if (pk) {
+                    if (!subtaskMapByParent[pk]) subtaskMapByParent[pk] = [];
+                    if (!subtaskMapByParent[pk].some(x => x.key === st.key)) {
+                        subtaskMapByParent[pk].push(st);
+                    }
+                }
+            });
+
+            const bugMapByParent = {};
+            allPossibleBugs.forEach(b => {
+                const parents = b.parentKeys || (b.parentKey ? [b.parentKey] : (b.parent ? [b.parent.key] : []));
+                parents.forEach(pk => {
+                    if (pk) {
+                        if (!bugMapByParent[pk]) bugMapByParent[pk] = [];
+                        if (!bugMapByParent[pk].some(x => x.key === b.key)) {
+                            bugMapByParent[pk].push(b);
+                        }
+                    }
+                });
+            });
+
+            if ((!lastTickets || lastTickets.length === 0) && (!lastDevSubtasks || lastDevSubtasks.length === 0) && (allPossibleBugs.length === 0)) {
+                devContainer.innerHTML = '<div class="empty-state">No results returned.</div>';
+                return;
+            }
+
+            // Get available assignees/statuses for dropdowns
+            const assigneeSet = new Set();
+            const statusSet = new Set();
+
+            [...(lastTickets || []), ...(lastDevSubtasks || []), ...allPossibleBugs].forEach(t => {
+                assigneeSet.add(t.assignee || 'Unassigned');
+                statusSet.add(t.status);
+            });
+
+            const allAssignees = Array.from(assigneeSet).sort((a, b) => a.localeCompare(b));
+            const allAssigneesSelected = devAssigneeFilters.length === allAssignees.length;
+            const allStatuses = Array.from(statusSet).sort((a, b) => a.localeCompare(b));
+            const allStatusesSelected = devStatusFilters.length === allStatuses.length;
+            const allTypes = ['Story', 'Sub Task', 'Bug'];
+            const allTypesSelected = devTypeFilter.length === allTypes.length;
+
+            // Generate Header HTML
+            const typeDropdownHtml = `
+                <div class="dev-filter-container" style="display:inline-block; margin-left: 10px;">
+                    <div class="multi-dd" onclick="event.stopPropagation();">
+                        <button class="multi-dd-btn" id="dropdown-btn-devType" onclick="toggleDropdown('devType', event)">
+                            Type: ${allTypesSelected ? 'All' : devTypeFilter.length + ' selected'} <span class="caret">▾</span>
+                        </button>
+                        <div class="multi-dd-options" id="dropdown-devType">
+                            <label class="dd-option" onclick="toggleDevTypeAll(event)">
+                                <input type="checkbox" ${allTypesSelected ? 'checked' : ''}>
+                                <span>(Select All)</span>
+                            </label>
+                            ${allTypes.map(type => `
+                                <label class="dd-option" onclick="toggleDevType('${type}', event)">
+                                    <input type="checkbox" ${devTypeFilter.includes(type) ? 'checked' : ''}>
+                                    <span>${type}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const assigneeDropdownHtml = `
+                <div class="dev-filter-container" style="display:inline-block; margin-left: 10px;">
+                    <div class="multi-dd" onclick="event.stopPropagation();">
+                        <button class="multi-dd-btn" id="dropdown-btn-devAssignee" onclick="toggleDropdown('devAssignee', event)">
+                            Assignee: ${allAssigneesSelected ? 'All' : devAssigneeFilters.length + ' selected'} <span class="caret">▾</span>
+                        </button>
+                        <div class="multi-dd-options" id="dropdown-devAssignee">
+                            <!-- Select All Option -->
+                            <label class="dd-option" onclick="toggleDevAssigneeAll(event)">
+                                <input type="checkbox" ${allAssigneesSelected ? 'checked' : ''}>
+                                <span>(Select All)</span>
+                            </label>
+                            ${allAssignees.map(val => `
+                                <label class="dd-option" onclick="toggleDevAssignee('${val}', event)">
+                                    <input type="checkbox" ${devAssigneeFilters.includes(val) ? 'checked' : ''}>
+                                    <span>${val}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            // Dropdown HTML for Status
+            const statusDropdownHtml = `
+                <div class="dev-filter-container" style="display:inline-block; margin-left: 10px;">
+                    <div class="multi-dd" onclick="event.stopPropagation();">
+                        <button class="multi-dd-btn" id="dropdown-btn-devStatus" onclick="toggleDropdown('devStatus', event)">
+                            Status: ${allStatusesSelected ? 'All' : devStatusFilters.length + ' selected'} <span class="caret">▾</span>
+                        </button>
+                        <div class="multi-dd-options" id="dropdown-devStatus">
+                            <label class="dd-option" onclick="toggleDevStatusAll(event)">
+                                <input type="checkbox" ${allStatusesSelected ? 'checked' : ''}>
+                                <span>(Select All)</span>
+                            </label>
+                            ${allStatuses.map(status => `
+                                <label class="dd-option" onclick="toggleDevStatus('${status}', event)">
+                                    <input type="checkbox" ${devStatusFilters.includes(status) ? 'checked' : ''}>
+                                    <span>${status}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const clearFilterBtnHtml = `
+                <button class="clear-btn" type="button" style="margin-left: 15px; background: #fff; border: 1px solid #d0d0d0; color: #666; font-size: 13px; font-weight: 500;" onclick="resetDevViewFilters()">
+                    Clear Filters
+                </button>
+            `;
+
+            devContainer.innerHTML = `
+                <div class="post-results-header" style="margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                        <div style="display: flex; align-items: center; flex-wrap: wrap;">
+                            ${assigneeDropdownHtml}
+                            ${typeDropdownHtml}
+                            ${statusDropdownHtml}
+                            ${clearFilterBtnHtml}
+                            <div class="expand-collapse-controls" style="margin-left: 15px; display: flex; align-items: center;">
+                                <button class="text-btn" onclick="expandAllDevStories()">Expand All</button>
+                                <span class="separator">|</span>
+                                <button class="text-btn" onclick="collapseAllDevStories()">Collapse All</button>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <button class="action-btn" onclick="fetchDevTicketsPost()" style="padding: 10px 18px; font-size: 13px;">BY POST</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="devTicketsList"></div>
+            `;
+
+            const ticketsList = document.getElementById('devTicketsList');
+            const buckets = {};
+
+            // Helper to add entity to bucket
+            const addToBucket = (ticket, type) => {
+                if (!devTypeFilter.includes(type)) return;
+                if (!devAssigneeFilters.includes(ticket.assignee || 'Unassigned')) return;
+                if (!devStatusFilters.includes(ticket.status)) return;
+
+                const label = getWeekRangeLabel(ticket.dueDate);
+                if (!buckets[label]) buckets[label] = [];
+                buckets[label].push({
+                    type: type,
+                    data: ticket,
+                    dueDateObj: ticket.dueDate ? new Date(ticket.dueDate) : null
+                });
+            };
+
+            // Process all
+            (lastTickets || []).forEach(t => addToBucket(t, 'Story'));
+            (lastDevSubtasks || []).forEach(t => addToBucket(t, 'Sub Task'));
+            allPossibleBugs.forEach(t => addToBucket(t, 'Bug'));
+
+            // Sort buckets
+            const sortedLabels = Object.keys(buckets).sort((a, b) => {
+                if (a === 'No due dates') return 1;
+                if (b === 'No due dates') return -1;
+                const da = buckets[a][0].dueDateObj || new Date(8640000000000000);
+                const db = buckets[b][0].dueDateObj || new Date(8640000000000000);
+                return da - db;
+            });
+
+            let html = '';
+            if (sortedLabels.length === 0) {
+                html = '<div class="empty-state">No tickets found matching filters.</div>';
+            } else {
+                sortedLabels.forEach(label => {
+                    // Check if this week is in the past
+                    let isWeekOverdue = false;
+                    if (label !== 'No due dates' && buckets[label].length > 0) {
+                        const firstItemDate = buckets[label][0].dueDateObj;
+                        if (firstItemDate) {
+                            const monday = getMonday(firstItemDate);
+                            const sunday = new Date(monday);
+                            sunday.setDate(monday.getDate() + 6);
+                            sunday.setHours(23, 59, 59, 999);
+                            if (sunday < new Date()) {
+                                isWeekOverdue = true;
+                            }
+                        }
+                    }
+
+                    const headerColor = isWeekOverdue ? '#d32f2f' : '#1868DB';
+                    const headerIcon = isWeekOverdue ? '⚠️' : '📅';
+
+                    html += `
+                        <div class="week-section" style="margin-top: 30px;">
+                            <h3 class="week-header" style="background: #f8f9fa; padding: 10px 15px; border-left: 4px solid ${headerColor}; color: ${headerColor}; font-size: 16px; font-weight: 700; border-radius: 4px; display: flex; align-items: center; margin-bottom: 15px;">
+                                <span style="margin-right: 10px;">${headerIcon}</span> ${label}
+                                <span style="margin-left: auto; font-size: 13px; font-weight: 400; color: #666;">${buckets[label].length} items</span>
+                            </h3>
+                            <div class="week-content" style="padding-left: 0;">
+                                <table class="tickets-table" style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 40px;"></th>
+                                            <th style="width: 150px;">Key</th>
+                                            <th>Summary</th>
+                                            <th style="width: 150px;">Status</th>
+                                            <th style="width: 150px;">Assignee</th>
+                                            <th style="width: 120px;">Due Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${buckets[label].map(item => {
+                        const t = item.data;
+                        const rawDue = t.dueDate ? formatDueDate(t.dueDate) : '-';
+                        const due = rawDue.startsWith('+ ') ? rawDue.substring(2) : rawDue;
+                        const skippedHighlightStatuses = ['done', 'closed', 'not a defect', 'descoped'];
+                        const statusLower = (t.status || '').toLowerCase().trim();
+                        const overdueClass = (rawDue.startsWith('+ ') && !skippedHighlightStatuses.includes(statusLower)) ? 'due-date-overdue' : '';
+                        const rowClass = item.type === 'Story' ? 'dev-story-row clickable' : (item.type === 'Sub Task' ? 'dev-subtask-row' : 'dev-bug-row');
+                        const isStory = item.type === 'Story';
+
+                        // Handle Story Expansion Context
+                        // Combine data from maps (detailed fetch) and ticket properties (fallback context)
+                        const mapSubtasks = (isStory && subtaskMapByParent[t.key]) ? subtaskMapByParent[t.key] : [];
+                        const ticketSubtasks = (isStory && t.subtasks) ? t.subtasks : [];
+
+                        // Merge uniquely by key
+                        const storySubtasks = [...mapSubtasks];
+                        ticketSubtasks.forEach(st => {
+                            if (!storySubtasks.some(x => x.key === st.key)) storySubtasks.push(st);
+                        });
+
+                        const mapBugs = (isStory && bugMapByParent[t.key]) ? bugMapByParent[t.key] : [];
+                        const ticketBugs = (isStory && t.linkedBugs) ? t.linkedBugs : [];
+
+                        const storyBugs = [...mapBugs];
+                        ticketBugs.forEach(b => {
+                            if (!storyBugs.some(x => x.key === b.key)) storyBugs.push(b);
+                        });
+
+                        const hasChildren = storySubtasks.length > 0 || storyBugs.length > 0 || (isStory && (t.subtaskKeys && t.subtaskKeys.length > 0));
+                        const expandAttr = isStory ? `onclick="toggleStoryExpansion('${t.key.replace(/[^a-zA-Z0-9]/g, '-')}')"` : '';
+                        const caretHtml = (isStory && hasChildren) ? `<span class="caret-icon" id="caret-${t.key.replace(/[^a-zA-Z0-9]/g, '-')}">▶</span>` : '';
+
+                        // Helper for icons
+                        const getDevTypeIcon = (type) => {
+                            if (type === 'Bug') return `<svg viewBox="0 0 24 24" width="14" height="14" stroke="red" stroke-width="2" fill="none" style="margin-right: 6px; vertical-align: middle;"><path d="m8 2 1.88 1.88M14.12 3.88 16 2M9 7.13v-1a3.003 3.003 0 1 1 6 0v1M12 20c-3.31 0-6-2.69-6-6 0-1 0-4 6-4s6 3 6 4c0 3.31-2.69 6-6 6ZM12 10v10M6 13H4M20 13h-2M6.71 18.29 5.3 19.7M18.7 19.7l-1.41-1.41"/></svg>`;
+                            if (type === 'Story') return `<svg viewBox="0 0 24 24" width="14" height="14" stroke="green" stroke-width="2" fill="none" style="margin-right: 6px; vertical-align: middle;"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>`;
+                            // DNA symbol for Sub Task
+                            return `<svg viewBox="0 0 24 24" width="14" height="14" stroke="#1868DB" stroke-width="2" fill="none" style="margin-right: 6px; vertical-align: middle;"><path d="m8 3 .1.1c.3.3.6.8.9 1.4.3.6.6 1.2.9 1.9.3.7.6 1.5.8 2.3.2.8.3 1.6.4 2.3 0 .7 0 1.4-.1 2-.1.6-.2 1.1-.3 1.5-.1.4-.3.7-.4 1-.1.3-.2.5-.3.6l-.1.1M16 3l-.1.1c-.3.3-.6.8-.9 1.4-.3.6-.6 1.2-.9 1.9-.3.7-.6 1.5-.8 2.3-.2.8-.3 1.6-.4 2.3 0 .7 0 1.4.1 2 .1.6.2 1.1.3 1.5.1.4.3.7.4 1 .1.3.2.5.3.6l.1.1M8 10h8M8 14h8"/></svg>`;
+                        };
+
+                        let rowHtml = `
+                                                <tr class="${rowClass}" ${expandAttr}>
+                                                    <td style="text-align: center;">${caretHtml}</td>
+                                                    <td style="white-space: nowrap; font-size: 13px;">
+                                                        <span style="display: flex; align-items: center;">
+                                                            ${getDevTypeIcon(item.type)}
+                                                            <a href="${JIRA_BASE_URL}${t.key}" target="_blank" class="ticket-link" onclick="event.stopPropagation()">${t.key}</a>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div style="font-weight: 500;">${t.summary}</div>
+                                                    </td>
+                                                    <td><span class="ticket-status">${t.status}</span></td>
+                                                    <td>${t.assignee || 'Unassigned'}</td>
+                                                    <td class="${overdueClass}">${due}</td>
+                                                </tr>
+                                            `;
+
+                        if (isStory && hasChildren) {
+                            rowHtml += `
+                                                    <tr id="expansion-${t.key.replace(/[^a-zA-Z0-9]/g, '-')}" class="expansion-row" style="display: none; background: #fafafa;">
+                                                        <td colspan="7" style="padding: 15px 30px;">
+                                                            <div style="border-left: 3px solid #ccc; padding-left: 20px;">
+                                                                <h4 style="font-size: 13px; color: #666; margin-bottom: 10px; font-weight: 600;">Related Items for ${t.key}</h4>
+                                                                <table class="tickets-table" style="width: 100%; font-size: 13px; background: #fff;">
+                                                                    <thead>
+                                                                        <tr style="background: #f0f0f0;">
+                                                                            <th style="width: 150px;">Key</th>
+                                                                            <th>Summary</th>
+                                                                            <th style="width: 150px;">Status</th>
+                                                                            <th style="width: 150px;">Assignee</th>
+                                                                            <th style="width: 120px;">Due Date</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        ${storySubtasks.map(st => `
+                                                                            <tr class="dev-subtask-row">
+                                                                                <td>
+                                                                                    <span style="display: flex; align-items: center;">
+                                                                                        ${getDevTypeIcon('Sub Task')}
+                                                                                        <a href="${JIRA_BASE_URL}${st.key}" target="_blank" class="ticket-link">${st.key}</a>
+                                                                                    </span>
+                                                                                </td>
+                                                                                <td>${st.summary}</td>
+                                                                                <td><span class="ticket-status">${st.status}</span></td>
+                                                                                <td>${st.assignee || 'Unassigned'}</td>
+                                                                                <td>
+                                                                                    ${(() => {
+                                    const rd = st.dueDate ? formatDueDate(st.dueDate) : '-';
+                                    const d = rd.startsWith('+ ') ? rd.substring(2) : rd;
+                                    const skippedHighlightStatuses = ['done', 'closed', 'not a defect', 'descoped'];
+                                    const statusLower = (st.status || '').toLowerCase().trim();
+                                    const oc = (rd.startsWith('+ ') && !skippedHighlightStatuses.includes(statusLower)) ? 'due-date-overdue' : '';
+                                    return `<span class="${oc}">${d}</span>`;
+                                })()}
+                                                                                </td>
+                                                                            </tr>
+                                                                        `).join('')}
+                                                                        ${storyBugs.map(b => `
+                                                                            <tr class="dev-bug-row">
+                                                                                <td>
+                                                                                    <span style="display: flex; align-items: center;">
+                                                                                        ${getDevTypeIcon('Bug')}
+                                                                                        <a href="${JIRA_BASE_URL}${b.key}" target="_blank" class="ticket-link">${b.key}</a>
+                                                                                    </span>
+                                                                                </td>
+                                                                                <td>${b.summary}</td>
+                                                                                <td><span class="ticket-status">${b.status}</span></td>
+                                                                                <td>${b.assignee || 'Unassigned'}</td>
+                                                                                <td>
+                                                                                    ${(() => {
+                                        const rd = b.dueDate ? formatDueDate(b.dueDate) : '-';
+                                        const d = rd.startsWith('+ ') ? rd.substring(2) : rd;
+                                        const skippedHighlightStatuses = ['done', 'closed', 'not a defect', 'descoped'];
+                                        const statusLower = (b.status || '').toLowerCase().trim();
+                                        const oc = (rd.startsWith('+ ') && !skippedHighlightStatuses.includes(statusLower)) ? 'due-date-overdue' : '';
+                                        return `<span class="${oc}">${d}</span>`;
+                                    })()}
+                                                                                </td>
+                                                                            </tr>
+                                                                        `).join('')}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                `;
+                        }
+                        return rowHtml;
+                    }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            ticketsList.innerHTML = html;
+        }
+
+        function toggleStoryExpansion(key) {
+            const row = document.getElementById(`expansion-${key}`);
+            const caret = document.getElementById(`caret-${key}`);
+            if (row) {
+                if (row.style.display === 'none') {
+                    row.style.display = 'table-row';
+                    if (caret) caret.classList.add('open');
+                } else {
+                    row.style.display = 'none';
+                    if (caret) caret.classList.remove('open');
+                }
+            }
+        }
+
+        function expandAllDevStories() {
+            document.querySelectorAll('.expansion-row').forEach(row => {
+                row.style.display = 'table-row';
+            });
+            document.querySelectorAll('.caret-icon').forEach(caret => {
+                caret.classList.add('open');
+            });
+        }
+
+        function collapseAllDevStories() {
+            document.querySelectorAll('.expansion-row').forEach(row => {
+                row.style.display = 'none';
+            });
+            document.querySelectorAll('.caret-icon').forEach(caret => {
+                caret.classList.remove('open');
+            });
+        }
+
+        function toggleDevType(val, evt) {
+            if (evt) evt.stopPropagation();
+            const index = devTypeFilter.indexOf(val);
+            if (index === -1) {
+                devTypeFilter.push(val);
+            } else {
+                devTypeFilter.splice(index, 1);
+            }
+            renderPostResults();
+            setTimeout(() => {
+                const dd = document.getElementById('dropdown-devType');
+                if (dd) dd.classList.add('open');
+                openDropdown = 'devType';
+            }, 0);
+        }
+
+        function toggleDevTypeAll(evt) {
+            if (evt) evt.stopPropagation();
+            const allTypes = ['Story', 'Sub Task', 'Bug'];
+            if (devTypeFilter.length === allTypes.length) {
+                devTypeFilter = [];
+            } else {
+                devTypeFilter = [...allTypes];
+            }
+            renderPostResults();
+            setTimeout(() => {
+                const dd = document.getElementById('dropdown-devType');
+                if (dd) dd.classList.add('open');
+                openDropdown = 'devType';
+            }, 0);
+        }
+
+        function toggleDevAssignee(val, evt) {
+            if (evt) evt.stopPropagation();
+            const index = devAssigneeFilters.indexOf(val);
+            if (index === -1) {
+                devAssigneeFilters.push(val);
+            } else {
+                devAssigneeFilters.splice(index, 1);
+            }
+            renderPostResults();
+            setTimeout(() => {
+                const dd = document.getElementById('dropdown-devAssignee');
+                if (dd) dd.classList.add('open');
+                openDropdown = 'devAssignee';
+            }, 0);
+        }
+
+        function toggleDevAssigneeAll(evt) {
+            if (evt) evt.stopPropagation();
+
+            // Re-calculate all assignees
+            const assigneeSet = new Set();
+            (lastTickets || []).forEach(t => assigneeSet.add(t.assignee || 'Unassigned'));
+            (lastDevSubtasks || []).forEach(t => assigneeSet.add(t.assignee || 'Unassigned'));
+            const allAssignees = Array.from(assigneeSet);
+
+            if (devAssigneeFilters.length === allAssignees.length) {
+                devAssigneeFilters = [];
+            } else {
+                devAssigneeFilters = [...allAssignees];
+            }
+            renderPostResults();
+            setTimeout(() => {
+                const dd = document.getElementById('dropdown-devAssignee');
+                if (dd) dd.classList.add('open');
+                openDropdown = 'devAssignee';
+            }, 0);
+        }
+        function toggleDevStatus(val, evt) {
+            if (evt) evt.stopPropagation();
+            const index = devStatusFilters.indexOf(val);
+            if (index === -1) {
+                devStatusFilters.push(val);
+            } else {
+                devStatusFilters.splice(index, 1);
+            }
+            renderPostResults();
+            setTimeout(() => {
+                const dd = document.getElementById('dropdown-devStatus');
+                if (dd) dd.classList.add('open');
+                openDropdown = 'devStatus';
+            }, 0);
+        }
+
+        function toggleDevStatusAll(evt) {
+            if (evt) evt.stopPropagation();
+
+            // Re-calculate all status values
+            const statusSet = new Set();
+            (lastTickets || []).forEach(t => {
+                statusSet.add(t.status);
+                (t.linkedBugs || []).forEach(b => statusSet.add(b.status));
+            });
+            (lastDevSubtasks || []).forEach(t => {
+                statusSet.add(t.status);
+                (t.linkedBugs || []).forEach(b => statusSet.add(b.status));
+            });
+            const allStatuses = Array.from(statusSet);
+
+            if (devStatusFilters.length === allStatuses.length) {
+                devStatusFilters = [];
+            } else {
+                devStatusFilters = [...allStatuses];
+            }
+            renderPostResults();
+            setTimeout(() => {
+                const dd = document.getElementById('dropdown-devStatus');
+                if (dd) dd.classList.add('open');
+                openDropdown = 'devStatus';
+            }, 0);
+        }
+
+
+
+        function toggleSubtaskGroup(groupId) {
+            const content = document.getElementById(groupId);
+            if (!content) return;
+
+            const group = content.closest('.subtask-group');
+            const isHidden = content.style.display === 'none';
+
+            content.style.display = isHidden ? 'block' : 'none';
+
+            if (isHidden) {
+                group.classList.add('expanded');
+            } else {
+                group.classList.remove('expanded');
+            }
+        }
+
+        function expandAllSubtasks() {
+            document.querySelectorAll('.subtask-content').forEach(el => {
+                el.style.display = 'block';
+                el.closest('.subtask-group').classList.add('expanded');
+            });
+        }
+
+        function collapseAllSubtasks() {
+            document.querySelectorAll('.subtask-content').forEach(el => {
+                el.style.display = 'none';
+                el.closest('.subtask-group').classList.remove('expanded');
+            });
         }
 
         function renderFRView(tickets) {
@@ -2831,7 +4111,7 @@
             }
 
             const frData = aggregateFRData(tickets);
-            
+
             if (frData.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -2873,23 +4153,23 @@
             const filterRow = `
                 <tr>
                     ${visibleColumns.map(col => {
-                        if (col.id === 'serial') {
-                            return `<th class="serial-col">#</th>`;
-                        }
-                        if (col.id === 'frId') {
-                            return `<th><input type="text" placeholder="Search FR ID" oninput="setFRFilter('frId', this.value, event)" onclick="event.stopPropagation();" value="${frFilters.frId || ''}"></th>`;
-                        }
-                        if (col.id === 'totalTickets') {
-                            return `<th><input type="text" placeholder="Search total" oninput="setFRFilter('totalTickets', this.value, event)" onclick="event.stopPropagation();" value="${frFilters.totalTickets || ''}"></th>`;
-                        }
-                        if (col.id === 'doneTickets') {
-                            return `<th><input type="text" placeholder="Search done" oninput="setFRFilter('doneTickets', this.value, event)" onclick="event.stopPropagation();" value="${frFilters.doneTickets || ''}"></th>`;
-                        }
-                        if (col.id === 'pendingTickets') {
-                            return `<th><input type="text" placeholder="Search pending" oninput="setFRFilter('pendingTickets', this.value, event)" onclick="event.stopPropagation();" value="${frFilters.pendingTickets || ''}"></th>`;
-                        }
-                        if (col.id === 'frStatus') {
-                            return `
+                if (col.id === 'serial') {
+                    return `<th class="serial-col">#</th>`;
+                }
+                if (col.id === 'frId') {
+                    return `<th><input type="text" placeholder="Search FR ID" oninput="setFRFilter('frId', this.value, event)" onclick="event.stopPropagation();" value="${frFilters.frId || ''}"></th>`;
+                }
+                if (col.id === 'totalTickets') {
+                    return `<th><input type="text" placeholder="Search total" oninput="setFRFilter('totalTickets', this.value, event)" onclick="event.stopPropagation();" value="${frFilters.totalTickets || ''}"></th>`;
+                }
+                if (col.id === 'doneTickets') {
+                    return `<th><input type="text" placeholder="Search done" oninput="setFRFilter('doneTickets', this.value, event)" onclick="event.stopPropagation();" value="${frFilters.doneTickets || ''}"></th>`;
+                }
+                if (col.id === 'pendingTickets') {
+                    return `<th><input type="text" placeholder="Search pending" oninput="setFRFilter('pendingTickets', this.value, event)" onclick="event.stopPropagation();" value="${frFilters.pendingTickets || ''}"></th>`;
+                }
+                if (col.id === 'frStatus') {
+                    return `
                                 <th>
                                     <div class="multi-dd" onclick="event.stopPropagation();">
                                         <button class="multi-dd-btn" id="dropdown-btn-frStatus" type="button" onclick="toggleDropdown('frStatus', event)">
@@ -2902,9 +4182,9 @@
                                     </div>
                                 </th>
                             `;
-                        }
-                        return '<th></th>';
-                    }).join('')}
+                }
+                return '<th></th>';
+            }).join('')}
                 </tr>
             `;
 
@@ -2926,7 +4206,7 @@
             `;
 
             const filteredAndSorted = applyFRFiltersAndSort(frData);
-            
+
             container.innerHTML = `
                 <div class="filter-actions">
                     ${getFilterActionsButtons(columnChooser)}
@@ -2940,24 +4220,25 @@
                     </thead>
                     <tbody>
                         ${filteredAndSorted.map((fr, idx) => {
-                            const cells = [];
-                            if (frColumnVisibility.serial) cells.push(`<td class="serial-col">${idx + 1}</td>`);
-                            if (frColumnVisibility.frId) cells.push(`<td>${fr.frId || 'N/A'}</td>`);
-                            if (frColumnVisibility.totalTickets) cells.push(`<td>${fr.totalTickets || 0}</td>`);
-                            if (frColumnVisibility.doneTickets) cells.push(`<td>${fr.doneTickets || 0}</td>`);
-                            if (frColumnVisibility.pendingTickets) cells.push(`<td>${fr.pendingTickets || 0}</td>`);
-                            if (frColumnVisibility.frStatus) cells.push(`<td>${fr.frStatus || 'N/A'}</td>`);
-                            // Construct Jira URL with FR ID - only make clickable if FR ID exists
-                            const frId = fr.frId || '';
-                            let rowAttrs = '';
-                            if (frId && frId !== 'N/A') {
-                                const jqlQuery = `cf[10049] = "${frId}"`;
-                                const encodedJql = encodeURIComponent(jqlQuery);
-                                const jiraUrl = `https://cardyai-hawaii.atlassian.net/issues/?jql=${encodedJql}`;
-                                rowAttrs = `onclick="window.open('${jiraUrl}', '_blank')" style="cursor:pointer;"`;
-                            }
-                            return `<tr ${rowAttrs}>${cells.join('')}</tr>`;
-                        }).join('')}
+                const cells = [];
+                if (frColumnVisibility.serial) cells.push(`<td class="serial-col">${idx + 1}</td>`);
+                if (frColumnVisibility.frId) cells.push(`<td>${fr.frId || 'N/A'}</td>`);
+                if (frColumnVisibility.totalTickets) cells.push(`<td>${fr.totalTickets || 0}</td>`);
+                if (frColumnVisibility.doneTickets) cells.push(`<td>${fr.doneTickets || 0}</td>`);
+                if (frColumnVisibility.pendingTickets) cells.push(`<td>${fr.pendingTickets || 0}</td>`);
+                if (frColumnVisibility.frStatus) cells.push(`<td>${fr.frStatus || 'N/A'}</td>`);
+                // Construct Jira URL with FR ID - only make clickable if FR ID exists
+                const frId = fr.frId || '';
+                let rowAttrs = '';
+                if (frId && frId !== 'N/A') {
+                    const parent = modules[activeModule].emId;
+                    const jqlQuery = `cf[10049] = "${frId}" AND parent = ${parent}`;
+                    const encodedJql = encodeURIComponent(jqlQuery);
+                    const jiraUrl = `https://cardyai-hawaii.atlassian.net/issues/?jql=${encodedJql}`;
+                    rowAttrs = `onclick="window.open('${jiraUrl}', '_blank')" style="cursor:pointer;"`;
+                }
+                return `<tr ${rowAttrs}>${cells.join('')}</tr>`;
+            }).join('')}
                     </tbody>
                 </table>
             `;
@@ -2967,7 +4248,7 @@
             lastTickets = tickets || [];
             const container = document.getElementById('ticketsContainer');
             container.classList.remove('grid-mode');
-            
+
             // Mark that data has been loaded and remove login mode
             if (tickets && tickets.length > 0) {
                 hasDataBeenLoaded = true;
@@ -2981,7 +4262,7 @@
                     if (passwordGroup) passwordGroup.style.display = 'none';
                 }
             }
-            
+
             if (!tickets || tickets.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -2999,6 +4280,16 @@
 
             if (viewMode === 'fr') {
                 renderFRView(tickets);
+                return;
+            }
+
+            if (viewMode === 'worklog') {
+                renderWorklogView(tickets);
+                return;
+            }
+
+            if (viewMode === 'dev') {
+                renderDevView(tickets);
                 return;
             }
 
@@ -3037,17 +4328,17 @@
                 const filterRow = `
                     <tr>
                         ${visibleColumns.map(col => {
-                            if (col.id === 'serial') {
-                                return `<th class="serial-col">#</th>`;
-                            }
-                            if (col.id === 'key') {
-                                return `<th><input type="text" placeholder="Search key" oninput="setFilter('key', this.value, event)" onclick="event.stopPropagation();" value="${filters.key || ''}"></th>`;
-                            }
-                            if (col.id === 'summary') {
-                                return `<th><input type="text" placeholder="Search summary" oninput="setFilter('summary', this.value, event)" onclick="event.stopPropagation();" value="${filters.summary || ''}"></th>`;
-                            }
-                            if (col.id === 'status') {
-                                return `
+                    if (col.id === 'serial') {
+                        return `<th class="serial-col">#</th>`;
+                    }
+                    if (col.id === 'key') {
+                        return `<th><input type="text" placeholder="Search key" oninput="setFilter('key', this.value, event)" onclick="event.stopPropagation();" value="${filters.key || ''}"></th>`;
+                    }
+                    if (col.id === 'summary') {
+                        return `<th><input type="text" placeholder="Search summary" oninput="setFilter('summary', this.value, event)" onclick="event.stopPropagation();" value="${filters.summary || ''}"></th>`;
+                    }
+                    if (col.id === 'status') {
+                        return `
                                     <th>
                                         <div class="multi-dd" onclick="event.stopPropagation();">
                                             <button class="multi-dd-btn" id="dropdown-btn-status" type="button" onclick="toggleDropdown('status', event)">
@@ -3060,9 +4351,9 @@
                                         </div>
                                     </th>
                                 `;
-                            }
-                            if (col.id === 'assignee') {
-                                return `
+                    }
+                    if (col.id === 'assignee') {
+                        return `
                                     <th>
                                         <div class="multi-dd" onclick="event.stopPropagation();">
                                             <button class="multi-dd-btn" id="dropdown-btn-assignee" type="button" onclick="toggleDropdown('assignee', event)">
@@ -3075,9 +4366,9 @@
                                         </div>
                                     </th>
                                 `;
-                            }
-                            if (col.id === 'priority') {
-                                return `
+                    }
+                    if (col.id === 'priority') {
+                        return `
                                     <th>
                                         <div class="multi-dd" onclick="event.stopPropagation();">
                                             <button class="multi-dd-btn" id="dropdown-btn-priority" type="button" onclick="toggleDropdown('priority', event)">
@@ -3090,36 +4381,39 @@
                                         </div>
                                     </th>
                                 `;
-                            }
-                            if (col.id === 'storyPoints') {
-                                return `<th><input type="text" placeholder="Search story points" oninput="setFilter('storyPoints', this.value, event)" onclick="event.stopPropagation();" value="${filters.storyPoints || ''}"></th>`;
-                            }
-                            if (col.id === 'timeOriginalEstimate') {
-                                return `<th><input type="text" placeholder="Search estimate" oninput="setFilter('timeOriginalEstimate', this.value, event)" onclick="event.stopPropagation();" value="${filters.timeOriginalEstimate || ''}"></th>`;
-                            }
-                            if (col.id === 'actualHours') {
-                                return `<th><input type="text" placeholder="Search time spent" oninput="setFilter('actualHours', this.value, event)" onclick="event.stopPropagation();" value="${filters.actualHours || ''}"></th>`;
-                            }
-                            if (col.id === 'timeDifference') {
-                                return `<th><input type="text" placeholder="Search difference" oninput="setFilter('timeDifference', this.value, event)" onclick="event.stopPropagation();" value="${filters.timeDifference || ''}"></th>`;
-                            }
-                            if (col.id === 'created') {
-                                return `<th><input type="text" placeholder="Search created" oninput="setFilter('created', this.value, event)" onclick="event.stopPropagation();" value="${filters.created || ''}"></th>`;
-                            }
-                            if (col.id === 'updated') {
-                                return `<th><input type="text" placeholder="Search updated" oninput="setFilter('updated', this.value, event)" onclick="event.stopPropagation();" value="${filters.updated || ''}"></th>`;
-                            }
-                            if (col.id === 'qaFailedCount') {
-                                return `<th class="qa-col"><input type="text" placeholder="Search QA loop" oninput="setFilter('qaFailedCount', this.value, event)" onclick="event.stopPropagation();" value="${filters.qaFailedCount || ''}"></th>`;
-                            }
-                            if (col.id === 'totalBugs') {
-                                return `<th class="qa-col"><input type="text" placeholder="Search total bugs" oninput="setFilter('totalBugs', this.value, event)" onclick="event.stopPropagation();" value="${filters.totalBugs || ''}"></th>`;
-                            }
-                            if (col.id === 'openBugs') {
-                                return `<th class="qa-col"><input type="text" placeholder="Search open bugs" oninput="setFilter('openBugs', this.value, event)" onclick="event.stopPropagation();" value="${filters.openBugs || ''}"></th>`;
-                            }
-                            return '<th></th>';
-                        }).join('')}
+                    }
+                    if (col.id === 'storyPoints') {
+                        return `<th><input type="text" placeholder="Search story points" oninput="setFilter('storyPoints', this.value, event)" onclick="event.stopPropagation();" value="${filters.storyPoints || ''}"></th>`;
+                    }
+                    if (col.id === 'dueDate') {
+                        return `<th><input type="text" placeholder="Search due date" oninput="setFilter('dueDate', this.value, event)" onclick="event.stopPropagation();" value="${filters.dueDate || ''}"></th>`;
+                    }
+                    if (col.id === 'timeOriginalEstimate') {
+                        return `<th><input type="text" placeholder="Search estimate" oninput="setFilter('timeOriginalEstimate', this.value, event)" onclick="event.stopPropagation();" value="${filters.timeOriginalEstimate || ''}"></th>`;
+                    }
+                    if (col.id === 'actualHours') {
+                        return `<th><input type="text" placeholder="Search time spent" oninput="setFilter('actualHours', this.value, event)" onclick="event.stopPropagation();" value="${filters.actualHours || ''}"></th>`;
+                    }
+                    if (col.id === 'timeDifference') {
+                        return `<th><input type="text" placeholder="Search difference" oninput="setFilter('timeDifference', this.value, event)" onclick="event.stopPropagation();" value="${filters.timeDifference || ''}"></th>`;
+                    }
+                    if (col.id === 'created') {
+                        return `<th><input type="text" placeholder="Search created" oninput="setFilter('created', this.value, event)" onclick="event.stopPropagation();" value="${filters.created || ''}"></th>`;
+                    }
+                    if (col.id === 'updated') {
+                        return `<th><input type="text" placeholder="Search updated" oninput="setFilter('updated', this.value, event)" onclick="event.stopPropagation();" value="${filters.updated || ''}"></th>`;
+                    }
+                    if (col.id === 'qaFailedCount') {
+                        return `<th class="qa-col"><input type="text" placeholder="Search QA loop" oninput="setFilter('qaFailedCount', this.value, event)" onclick="event.stopPropagation();" value="${filters.qaFailedCount || ''}"></th>`;
+                    }
+                    if (col.id === 'totalBugs') {
+                        return `<th class="qa-col"><input type="text" placeholder="Search total bugs" oninput="setFilter('totalBugs', this.value, event)" onclick="event.stopPropagation();" value="${filters.totalBugs || ''}"></th>`;
+                    }
+                    if (col.id === 'openBugs') {
+                        return `<th class="qa-col"><input type="text" placeholder="Search open bugs" oninput="setFilter('openBugs', this.value, event)" onclick="event.stopPropagation();" value="${filters.openBugs || ''}"></th>`;
+                    }
+                    return '<th></th>';
+                }).join('')}
                     </tr>
                 `;
 
@@ -3200,6 +4494,10 @@
                 email = email + '@cardyai.com';
             }
 
+            // Save credentials for subsequent requests
+            savedEmail = email;
+            savedApiToken = apiToken;
+
             updateBtn.disabled = true;
             showLoading(true);
             hideError();
@@ -3212,7 +4510,15 @@
                     throw new Error(`Module "${activeModule}" not found in configuration`);
                 }
                 const parent = currentModule.emId;
-                const formBody = new URLSearchParams({ email, apiToken, parent }).toString();
+                const sprintId = currentModule.sprintId;
+
+                // Build form body, only include sprintId if it has a value
+                const formData = { email, apiToken, parent };
+                if (sprintId && sprintId.trim() !== '') {
+                    formData.sprintId = sprintId;
+                }
+                const formBody = new URLSearchParams(formData).toString();
+
                 const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
                     mode: 'cors',
@@ -3230,22 +4536,22 @@
                 }
 
                 const data = await response.json();
-                
+
                 if (data.error) {
                     throw new Error(data.error);
                 }
 
                 const tickets = data.tickets || data.issues || data;
                 const normalized = Array.isArray(tickets) ? tickets : [tickets];
-                
+
                 // Ensure viewMode is set to dashboard after each fetch
                 viewMode = 'dashboard';
-                
+
                 // Mark that data has been loaded
                 if (normalized && normalized.length > 0) {
                     hasDataBeenLoaded = true;
                 }
-                
+
                 // Remove login mode when data is successfully loaded
                 const mainContainer = document.querySelector('.container');
                 if (mainContainer && normalized && normalized.length > 0) {
@@ -3256,16 +4562,16 @@
                     if (emailGroup) emailGroup.style.display = 'none';
                     if (passwordGroup) passwordGroup.style.display = 'none';
                 }
-                
+
                 renderTickets(normalized);
                 updateStatus(`Loaded ${normalized.length} ticket(s)`);
-                
+
                 // Update last fetch time
                 const now = new Date();
-                const timeStr = now.toLocaleTimeString('en-US', { 
-                    hour: '2-digit', 
+                const timeStr = now.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
                     minute: '2-digit',
-                    hour12: true 
+                    hour12: true
                 });
                 const dateStr = now.toLocaleDateString('en-US', {
                     month: 'short',
@@ -3294,5 +4600,5 @@
         // Do not auto-load; user triggers via Update button
     </script>
 </body>
-</html>
 
+</html>
