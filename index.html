@@ -9,7 +9,7 @@
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%231c65e3' d='M64 64c0-17.7-14.3-32-32-32S0 46.3 0 64L0 400c0 44.2 35.8 80 80 80l400 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L80 416c-8.8 0-16-7.2-16-16L64 64zm406.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L320 210.7 262.6 153.4c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l73.4-73.4 57.4 57.4c12.5 12.5 32.8 12.5 45.3 0l128-128z'/%3E%3C/svg%3E">
     <script>
         // JIRA Apps Script URL - Update this when you deploy a new version
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw93WuxmIrlUdwzzjUlSEzGoJK3sFDqt1ieD4OGf1lASEnPj0IedTcTN7LCZpgm30ilIA/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxD0Z1aNp1hJ9TF_9Y1_rphEs_LTRSwu8Jv0fIadRd4ekX5UxgGRBXWd2AqjND4EMUxEQ/exec';
         const JIRA_BASE_URL = 'https://cardyai-hawaii.atlassian.net/browse/';
     </script>
     <style>
@@ -1189,6 +1189,7 @@
         let hasDataBeenLoaded = false; // Track if data has been loaded at least once
         let savedEmail = '';
         let savedApiToken = '';
+        let isFetchingDevData = false; // Track if dev data is currently being fetched
 
         // Initialize module dropdown on page load
         function initializeModuleDropdown() {
@@ -3075,6 +3076,7 @@
             const statusCounts = {};
             const assigneeCounts = {};
             const totalTickets = tickets.length;
+
             tickets.forEach(t => {
                 const status = (t.status || 'Unknown').trim();
                 statusCounts[status] = (statusCounts[status] || 0) + 1;
@@ -3139,6 +3141,52 @@
                 .map(([k, v]) => {
                     const percentage = totalTickets > 0 ? ((v / totalTickets) * 100).toFixed(1) : '0.0';
                     return `<li><span>${k}</span><span>${v} (${percentage}%)</span></li>`;
+                })
+                .join('');
+
+            const assigneeSubTaskCounts = {};
+            let totalSubTasks = 0;
+            (lastDevSubtasks || []).forEach(t => {
+                const assignee = (t.assignee || 'Unassigned').trim();
+                assigneeSubTaskCounts[assignee] = (assigneeSubTaskCounts[assignee] || 0) + 1;
+                totalSubTasks++;
+            });
+
+            const subTasksCountList = Object.entries(assigneeSubTaskCounts)
+                .sort((a, b) => b[1] - a[1])
+                .map(([k, v]) => {
+                    const percentage = totalSubTasks > 0 ? ((v / totalSubTasks) * 100).toFixed(1) : '0.0';
+                    return `<li><span>${k}</span><span>${v} (${percentage}%)</span></li>`;
+                })
+                .join('');
+
+            // Calculate Assignee (Sub Task Story Points)
+            const assigneeSubTaskSP = {};
+            let totalSubTaskSP = 0;
+            (lastDevSubtasks || []).forEach(t => {
+                const assignee = (t.assignee || 'Unassigned').trim();
+                // Ensure storyPoints is treated as a number
+                // Check various possible locations/names for Story Points
+                let item = t;
+                // If backend returns raw fields in a property (unlikely based on assignee, but possible)
+                if (t.fields) item = t.fields;
+
+                let sp = item.storyPoints || item.customfield_10048 || item.customfield_10026 || item.customfield_10016 || item.customfield_10034;
+
+                if (typeof sp !== 'number') {
+                    sp = parseFloat(sp);
+                }
+                if (isNaN(sp)) sp = 0;
+
+                assigneeSubTaskSP[assignee] = (assigneeSubTaskSP[assignee] || 0) + sp;
+                totalSubTaskSP += sp;
+            });
+
+            const subTasksSPList = Object.entries(assigneeSubTaskSP)
+                .sort((a, b) => b[1] - a[1])
+                .map(([k, v]) => {
+                    const percentage = totalSubTaskSP > 0 ? ((v / totalSubTaskSP) * 100).toFixed(1) : '0.0';
+                    return `<li><span>${k}</span><span>${Math.round(v * 10) / 10} (${percentage}%)</span></li>`;
                 })
                 .join('');
 
@@ -3220,7 +3268,7 @@
                     </div>
                     <div class="dash-card">
                         <div class="widget-header">
-                            <h3>Assignee (ACs Count)</h3>
+                            <h3>ACs Ownership</h3>
                             <span class="section-count" style="font-weight: 700;">${totalTickets}</span>
                         </div>
                         <ul class="dash-list">
@@ -3229,7 +3277,7 @@
                     </div>
                     <div class="dash-card">
                         <div class="widget-header">
-                            <h3>Assignee ACs (Story Points)</h3>
+                            <h3>ACs Story Points</h3>
                             <span class="section-count" style="font-weight: 700;">${totalSP % 1 === 0 ? totalSP : totalSP.toFixed(1)}</span>
                         </div>
                         <ul class="dash-list">
@@ -3247,6 +3295,28 @@
                         </div>
                         <ul class="dash-list">
                             ${frStatusList || '<li><span>No FRs</span><span>0 (0.0%)</span></li>'}
+                        </ul>
+                    </div>
+                    <div class="dash-card">
+                        <div class="widget-header">
+                            <h3>Sub Tasks Assignee</h3>
+                            <span class="section-count" style="font-weight: 700;">
+                                ${isFetchingDevData ? '<span style="font-size: 12px; font-weight: normal;">Fetching...</span>' : totalSubTasks}
+                            </span>
+                        </div>
+                        <ul class="dash-list">
+                            ${isFetchingDevData ? '<li style="justify-content: center; color: #777;">Loading...</li>' : (subTasksCountList || '<li><span>None</span><span>0 (0.0%)</span></li>')}
+                        </ul>
+                    </div>
+                    <div class="dash-card">
+                        <div class="widget-header">
+                            <h3>Sub Tasks Story Points</h3>
+                            <span class="section-count" style="font-weight: 700;">
+                                ${isFetchingDevData ? '<span style="font-size: 12px; font-weight: normal;">Fetching...</span>' : Math.round(totalSubTaskSP * 10) / 10}
+                            </span>
+                        </div>
+                        <ul class="dash-list">
+                            ${isFetchingDevData ? '<li style="justify-content: center; color: #777;">Loading...</li>' : (subTasksSPList || '<li><span>None</span><span>0 (0.0%)</span></li>')}
                         </ul>
                     </div>
                     <div class="dash-card">
@@ -3387,11 +3457,27 @@
 
         function renderDevView(tickets) {
             const container = document.getElementById('ticketsContainer');
-            container.innerHTML = `
-                <div class="filter-actions">
-                    ${getFilterActionsButtons()}
-                </div>
-                <div class="dev-view-container" style="padding: 20px;">
+
+            let content = '';
+
+            if (lastDevSubtasks.length > 0 || (lastTickets && lastTickets.length > 0 && !lastTickets.some(t => t.subtaskKeys && t.subtaskKeys.length > 0))) {
+                // Data already loaded OR no subtasks to load
+                // We need to delay this slightly to let the container render first if we want to call renderPostResults immediately 
+                // but since we are replacing innerHTML, we can just set up the structure and then call renderPostResults
+                setTimeout(() => renderPostResults(), 0);
+                content = `
+                    <div id="devResultsContainer">
+                        <!-- Results will be rendered here -->
+                    </div>
+                 `;
+            } else if (isFetchingDevData) {
+                content = `
+                    <div id="devResultsContainer">
+                        <div class="loading-state">Fetching Dev Tickets (Sub-tasks & Linked Bugs)...</div>
+                    </div>
+                `;
+            } else {
+                content = `
                     <div style="margin-bottom: 20px;">
                          <button class="primary-btn" onclick="fetchDevTicketsPost()">
                             <span class="btn-icon">⚡</span>Fetch Dev Tickets
@@ -3402,42 +3488,71 @@
                             <p>Click Fetch Dev Tickets to fetch data</p>
                         </div>
                     </div>
+                 `;
+            }
+
+            container.innerHTML = `
+                <div class="filter-actions">
+                    ${getFilterActionsButtons()}
+                </div>
+                <div class="dev-view-container" style="padding: 20px;">
+                    ${content}
                 </div>
             `;
         }
 
         async function fetchDevTicketsPost() {
             const devContainer = document.getElementById('devResultsContainer');
-            if (!devContainer) return;
+            if (devContainer) {
+                devContainer.innerHTML = '<div class="loading-state">Fetching..</div>';
+            }
+            showLoading(true);
 
+            try {
+                await fetchDevDataOnly();
+                renderPostResults();
+            } catch (error) {
+                console.error("Dev POST Error:", error);
+                if (devContainer) {
+                    devContainer.innerHTML = `<div class="error-msg">Error: ${error.message}</div>`;
+                }
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function fetchDevDataOnly() {
             // Extract subtask keys from currently loaded tickets
             if (!lastTickets || lastTickets.length === 0) {
-                devContainer.innerHTML = '<div class="empty-state">No tickets loaded to fetch subtasks from.</div>';
                 return;
             }
 
             const keys = lastTickets.flatMap(t => t.subtaskKeys || []);
 
             if (keys.length === 0) {
-                // If no subtasks, just clear subtasks and render what we have (Stories and their linked bugs)
+                // If no subtasks, just clear subtasks
                 lastDevSubtasks = [];
+                // But still initialize assignee filters from main tickets
                 const initialAssigneeSet = new Set();
                 (lastTickets || []).forEach(t => {
                     initialAssigneeSet.add(t.assignee || 'Unassigned');
                     (t.linkedBugs || []).forEach(b => initialAssigneeSet.add(b.assignee || 'Unassigned'));
                 });
                 devAssigneeFilters = Array.from(initialAssigneeSet);
-                renderPostResults();
                 return;
             }
 
-            showLoading(true);
-            devContainer.innerHTML = '<div class="loading-state">Fetching..</div>';
+            isFetchingDevData = true;
+
+            // Trigger dashboard update to show loading state in the widget
+            if (viewMode === 'dashboard') {
+                renderDashboard(lastTickets);
+            }
 
             try {
                 // Construct URL (using centralized SCRIPT_URL)
-                const email = savedEmail || document.getElementById('emailInput').value;
-                const apiToken = savedApiToken || document.getElementById('tokenInput').value;
+                const email = savedEmail || document.getElementById('emailInput')?.value;
+                const apiToken = savedApiToken || document.getElementById('tokenInput')?.value;
 
                 if (!email || !apiToken) {
                     throw new Error("Missing credentials. Please ensure you are logged in.");
@@ -3454,7 +3569,8 @@
                     requestType: 'post_search',
                     email: email,
                     apiToken: apiToken,
-                    keys: keys
+                    keys: keys,
+                    fields: ['summary', 'status', 'assignee', 'storyPoints', 'customfield_10048', 'customfield_10026', 'customfield_10016', 'customfield_10034', 'issuetype', 'parent', 'priority']
                 };
 
                 const bugsUrl = `${SCRIPT_URL}?email=${encodeURIComponent(email)}&apiToken=${encodeURIComponent(apiToken)}&requestType=fetch_bugs&parent=${encodeURIComponent(parent)}&sprintId=${encodeURIComponent(sprintId)}&maxResults=500`;
@@ -3484,6 +3600,8 @@
                 // Store data
                 lastDevSubtasks = subtaskData.tickets || [];
                 lastDevBugsDetailed = bugsData.tickets || [];
+
+
 
                 // key: Initialize filters with all assignees and statuses from parents AND fetched subtasks (and their bugs)
                 const initialAssigneeSet = new Set();
@@ -3521,13 +3639,18 @@
                 devAssigneeFilters = Array.from(initialAssigneeSet); // Select all by default
                 devStatusFilters = Array.from(initialStatusSet); // Select all by default
 
-                renderPostResults();
-
-            } catch (error) {
-                console.error("Dev POST Error:", error);
-                devContainer.innerHTML = `<div class="error-msg">Error: ${error.message}</div>`;
             } finally {
-                showLoading(false);
+                isFetchingDevData = false;
+                // If currently in Dev View, we should re-render or at least remove loading state
+                if (viewMode === 'dev') {
+                    // We can try to render results if container exists
+                    if (document.getElementById('devResultsContainer')) {
+                        renderPostResults();
+                    }
+                } else if (viewMode === 'dashboard') {
+                    // Update dashboard if we're on it, to show subtask stats
+                    renderDashboard(lastTickets);
+                }
             }
         }
 
@@ -3698,8 +3821,6 @@
                                 <button class="text-btn" onclick="collapseAllDevStories()">Collapse All</button>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <button class="action-btn" onclick="fetchDevTicketsPost()" style="padding: 10px 18px; font-size: 13px;">BY POST</button>
                         </div>
                     </div>
                 </div>
@@ -4581,6 +4702,9 @@
                 if (fetchTimeEl) {
                     fetchTimeEl.textContent = `${dateStr} ${timeStr}`;
                 }
+
+                // Trigger Dev tickets fetch in the background
+                fetchDevDataOnly().catch(err => console.error('Background Dev Fetch Error:', err));
             } catch (error) {
                 console.error('Error loading tickets:', error);
                 showError(`Error loading tickets: ${error.message}`);
