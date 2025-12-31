@@ -414,7 +414,7 @@
             padding: 8px 12px;
             display: flex;
             gap: 10px;
-            justify-content: flex-end;
+            justify-content: flex-start;
             align-items: center;
             flex-wrap: wrap;
         }
@@ -434,6 +434,12 @@
             background: rgba(24, 104, 219, 0.08);
             border-color: #1868DB;
             color: #444;
+        }
+
+        .clear-btn.active {
+            background: #1868DB;
+            color: white;
+            border-color: #1868DB;
         }
 
         .dash-grid {
@@ -1790,8 +1796,7 @@
         }
 
         function toggleDashboard() {
-            viewMode = viewMode === 'dashboard' ? 'table' : 'dashboard';
-            updateDashboardButton();
+            viewMode = 'dashboard';
             renderTickets(lastTickets);
         }
 
@@ -2310,61 +2315,47 @@
 
         // Helper function to generate filter action buttons based on current view
         function getFilterActionsButtons(columnChooser = '') {
-            let buttons = [];
+            let tabs = [];
+            let options = [];
 
             // Export button (available in table and FR views)
             if (viewMode === 'table' || viewMode === 'fr') {
-                buttons.push(`<button class="clear-btn" type="button" onclick="exportToCSV()" title="Export to CSV">Export</button>`);
+                options.push(`<button class="clear-btn" type="button" onclick="exportToCSV()" title="Export to CSV">Export</button>`);
             }
 
             // Column chooser (available in table and FR views)
             if (columnChooser && (viewMode === 'table' || viewMode === 'fr')) {
-                buttons.push(columnChooser);
+                options.push(columnChooser);
             }
 
-            // View toggle buttons based on current view
-            // View toggle buttons based on current view
-            if (viewMode === 'dashboard') {
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('table')">AC View</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('fr')">FR View</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('worklog')">Worklog</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('sprintplan')">Sprint Plan β</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dev')">Dev View</button>`);
-            } else if (viewMode === 'fr') {
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dashboard')">Dashboard</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('table')">AC View</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('worklog')">Worklog</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('sprintplan')">Sprint Plan β</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dev')">Dev View</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="clearFRFilters()">Clear filters</button>`);
+            // View toggle buttons - Always show all tabs
+            const viewConfigs = [
+                { id: 'dashboard', label: 'Dashboard', onClick: "toggleView('dashboard')" },
+                { id: 'table', label: 'AC View', onClick: "toggleView('table')" },
+                { id: 'fr', label: 'FR View', onClick: "toggleView('fr')" },
+                { id: 'worklog', label: 'Worklog', onClick: "toggleView('worklog')" },
+                { id: 'sprintplan', label: 'Sprint Plan β', onClick: "toggleView('sprintplan')" },
+                { id: 'dev', label: 'Dev View', onClick: "toggleView('dev')" }
+            ];
+
+            viewConfigs.forEach(conf => {
+                const isActive = (viewMode === conf.id);
+                // For AC View tab, we special case the click to toggleView('table')
+                // For Dashboard tab, we special case the click to toggleView('dashboard')
+                tabs.push(`<button class="clear-btn ${isActive ? 'active' : ''}" type="button" onclick="${conf.onClick}">${conf.label}</button>`);
+            });
+
+            // Extra buttons for specific views
+            if (viewMode === 'fr') {
+                options.push(`<button class="clear-btn" type="button" onclick="clearFRFilters()">Clear filters</button>`);
             } else if (viewMode === 'table') {
-                buttons.push(`<button class="clear-btn" type="button" id="dashboardBtn" onclick="toggleDashboard()">Dashboard</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('fr')">FR View</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('worklog')">Worklog</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('sprintplan')">Sprint Plan β</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dev')">Dev View</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="clearFilters()">Clear filters</button>`);
-            } else if (viewMode === 'worklog') {
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dashboard')">Dashboard</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('table')">AC View</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('fr')">FR View</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('sprintplan')">Sprint Plan β</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dev')">Dev View</button>`);
-            } else if (viewMode === 'sprintplan') {
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dashboard')">Dashboard</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('table')">AC View</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('fr')">FR View</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('worklog')">Worklog</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dev')">Dev View</button>`);
-            } else if (viewMode === 'dev') {
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('dashboard')">Dashboard</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('table')">AC View</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('fr')">FR View</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('worklog')">Worklog</button>`);
-                buttons.push(`<button class="clear-btn" type="button" onclick="toggleView('sprintplan')">Sprint Plan β</button>`);
+                options.push(`<button class="clear-btn" type="button" onclick="clearFilters()">Clear filters</button>`);
             }
 
-            return buttons.join('\n                        ');
+            return {
+                tabs: tabs.join('\n                        '),
+                options: options.join('\n                        ')
+            };
         }
 
         // Unified export function for all views
@@ -3456,7 +3447,7 @@
 
             container.innerHTML = `
                 <div class="filter-actions">
-                    ${getFilterActionsButtons()}
+                    ${getFilterActionsButtons().tabs}
                 </div>
                 <div class="dash-grid">
                     <div class="dash-card ${isACStatusExpanded ? '' : 'collapsed'}" id="acStatusWidget">
@@ -3630,7 +3621,7 @@
 
             container.innerHTML = `
                 <div class="filter-actions">
-                    ${getFilterActionsButtons()}
+                    ${getFilterActionsButtons().tabs}
                 </div>
                 <div class="dash-grid">
                     <div class="dash-card time-tracking-widget" id="assigneeTimeTrackingWidget">
@@ -3683,7 +3674,7 @@
             const container = document.getElementById('ticketsContainer');
             container.innerHTML = `
                 <div class="filter-actions">
-                    ${getFilterActionsButtons()}
+                    ${getFilterActionsButtons().tabs}
                 </div>
                 <div class="sprint-plan-container" style="padding: 40px; text-align: center; color: #666;">
                     <div style="font-size: 48px; margin-bottom: 20px;">🏗️</div>
@@ -3731,9 +3722,10 @@
                  `;
             }
 
+            const viewActions = getFilterActionsButtons();
             container.innerHTML = `
-                <div class="filter-actions">
-                    ${getFilterActionsButtons()}
+                <div class="filter-actions" style="border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                    ${viewActions.tabs}
                 </div>
                 <div class="dev-view-container" style="padding: 20px;">
                     ${content}
@@ -4821,9 +4813,13 @@
 
             const filteredAndSorted = applyFRFiltersAndSort(frData);
 
+            const viewActions = getFilterActionsButtons(columnChooser);
             container.innerHTML = `
+                <div class="filter-actions" style="border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                    ${viewActions.tabs}
+                </div>
                 <div class="filter-actions">
-                    ${getFilterActionsButtons(columnChooser)}
+                    ${viewActions.options}
                 </div>
                 <table class="tickets-table">
                     <thead>
@@ -5053,9 +5049,13 @@
                     </div>
                 `;
 
+                const viewActions = getFilterActionsButtons(columnChooser);
                 container.innerHTML = `
+                    <div class="filter-actions" style="border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                        ${viewActions.tabs}
+                    </div>
                     <div class="filter-actions">
-                        ${getFilterActionsButtons(columnChooser)}
+                        ${viewActions.options}
                     </div>
                     <table class="tickets-table">
                         <thead>
