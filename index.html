@@ -647,7 +647,7 @@
         }
 
         .report-assignee {
-            width: 140px;
+            width: 120px;
             font-size: 13px;
             color: #444;
             padding-right: 12px !important;
@@ -699,11 +699,12 @@
         }
 
         .report-total {
-            width: 40px;
+            width: 100px;
             text-align: right;
             font-size: 13px;
             font-weight: 600;
             color: #666;
+            white-space: nowrap;
         }
 
         .toggle-btn {
@@ -3552,37 +3553,48 @@
                 const assignee = (t.assignee || 'Unassigned').trim();
                 const category = getReportCategory(t.status);
 
+                // Get Story Points for this subtask
+                let item = t;
+                if (t.fields) item = t.fields;
+                let sp = item.storyPoints || item.customfield_10048 || item.customfield_10026 || item.customfield_10016 || item.customfield_10034;
+                if (typeof sp !== 'number') sp = parseFloat(sp);
+                if (isNaN(sp)) sp = 0;
+
                 if (!subTaskReportData[assignee]) {
                     subTaskReportData[assignee] = {
-                        todo: 0,
-                        inprogress: 0,
-                        blocked: 0,
-                        review: 0,
-                        closed: 0,
-                        total: 0
+                        todo: { count: 0, sp: 0 },
+                        inprogress: { count: 0, sp: 0 },
+                        blocked: { count: 0, sp: 0 },
+                        review: { count: 0, sp: 0 },
+                        closed: { count: 0, sp: 0 },
+                        totalCount: 0,
+                        totalSP: 0
                     };
                 }
-                subTaskReportData[assignee][category]++;
-                subTaskReportData[assignee].total++;
+                subTaskReportData[assignee][category].count++;
+                subTaskReportData[assignee][category].sp += sp;
+                subTaskReportData[assignee].totalCount++;
+                subTaskReportData[assignee].totalSP += sp;
             });
 
             const subTaskReportRows = Object.entries(subTaskReportData)
-                .sort((a, b) => b[1].total - a[1].total)
-                .map(([assignee, counts]) => {
-                    const getWidth = (count) => (counts.total > 0 ? (count / counts.total) * 100 : 0);
+                .sort((a, b) => b[1].totalCount - a[1].totalCount)
+                .map(([assignee, data]) => {
+                    const getWidth = (count) => (data.totalCount > 0 ? (count / data.totalCount) * 100 : 0);
+                    const formatSP = (val) => val % 1 === 0 ? val : val.toFixed(1);
                     return `
                         <tr>
                             <td class="report-assignee" title="${assignee}">${assignee}</td>
                             <td class="report-bar-cell">
                                 <div class="stacked-bar">
-                                    ${counts.todo > 0 ? `<div class="bar-segment seg-todo" style="width: ${getWidth(counts.todo)}%" title="ToDo: ${counts.todo}"></div>` : ''}
-                                    ${counts.inprogress > 0 ? `<div class="bar-segment seg-inprogress" style="width: ${getWidth(counts.inprogress)}%" title="In Progress: ${counts.inprogress}"></div>` : ''}
-                                    ${counts.blocked > 0 ? `<div class="bar-segment seg-blocked" style="width: ${getWidth(counts.blocked)}%" title="Blocked: ${counts.blocked}"></div>` : ''}
-                                    ${counts.review > 0 ? `<div class="bar-segment seg-review" style="width: ${getWidth(counts.review)}%" title="Review: ${counts.review}"></div>` : ''}
-                                    ${counts.closed > 0 ? `<div class="bar-segment seg-closed" style="width: ${getWidth(counts.closed)}%" title="Closed: ${counts.closed}"></div>` : ''}
+                                    ${data.todo.count > 0 ? `<div class="bar-segment seg-todo" style="width: ${getWidth(data.todo.count)}%" title="ToDo: ${data.todo.count} (${formatSP(data.todo.sp)})"></div>` : ''}
+                                    ${data.inprogress.count > 0 ? `<div class="bar-segment seg-inprogress" style="width: ${getWidth(data.inprogress.count)}%" title="In Progress: ${data.inprogress.count} (${formatSP(data.inprogress.sp)})"></div>` : ''}
+                                    ${data.blocked.count > 0 ? `<div class="bar-segment seg-blocked" style="width: ${getWidth(data.blocked.count)}%" title="Blocked: ${data.blocked.count} (${formatSP(data.blocked.sp)})"></div>` : ''}
+                                    ${data.review.count > 0 ? `<div class="bar-segment seg-review" style="width: ${getWidth(data.review.count)}%" title="Review: ${data.review.count} (${formatSP(data.review.sp)})"></div>` : ''}
+                                    ${data.closed.count > 0 ? `<div class="bar-segment seg-closed" style="width: ${getWidth(data.closed.count)}%" title="Closed: ${data.closed.count} (${formatSP(data.closed.sp)})"></div>` : ''}
                                 </div>
                             </td>
-                            <td class="report-total">${counts.total}</td>
+                            <td class="report-total">${data.totalCount} (${formatSP(data.totalSP)})</td>
                         </tr>
                     `;
                 }).join('');
@@ -3708,7 +3720,7 @@
                         <div class="widget-header">
                             <h3>Sub Tasks Progress</h3>
                             <span class="section-count" style="font-weight: 700;">
-                                ${isFetchingDevData ? '<span style="font-size: 12px; font-weight: normal;">Fetching...</span>' : totalSubTasks}
+                                ${isFetchingDevData ? '<span style="font-size: 12px; font-weight: normal;">Fetching...</span>' : `${totalSubTasks} (${totalSubTaskSP % 1 === 0 ? totalSubTaskSP : totalSubTaskSP.toFixed(1)})`}
                             </span>
                         </div>
                         <div class="dash-section" style="margin-bottom: 0;">
