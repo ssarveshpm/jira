@@ -9,7 +9,7 @@
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%231c65e3' d='M64 64c0-17.7-14.3-32-32-32S0 46.3 0 64L0 400c0 44.2 35.8 80 80 80l400 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L80 416c-8.8 0-16-7.2-16-16L64 64zm406.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L320 210.7 262.6 153.4c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l73.4-73.4 57.4 57.4c12.5 12.5 32.8 12.5 45.3 0l128-128z'/%3E%3C/svg%3E">
     <script>
         // JIRA Apps Script URL - Update this when you deploy a new version
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxD0Z1aNp1hJ9TF_9Y1_rphEs_LTRSwu8Jv0fIadRd4ekX5UxgGRBXWd2AqjND4EMUxEQ/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwiJK4zZmzp7qGE1OzwF7cBeZrebPPwIZqKwJFWOLHAB2P6QwYk3upUHXZdiJmaXwZDGg/exec';
         const JIRA_BASE_URL = 'https://cardyai-hawaii.atlassian.net/browse/';
     </script>
     <style>
@@ -473,8 +473,16 @@
         }
 
         .dash-card h3 {
-            margin-bottom: 12px;
+            margin-bottom: 4px;
             color: #444;
+        }
+
+        .widget-subtitle {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 12px;
+            font-weight: normal;
+            display: block;
         }
 
         .dash-list {
@@ -612,8 +620,9 @@
             min-width: 80px;
         }
 
-        /* Collapsible AC Status Widget */
-        #acStatusWidget.collapsed .dash-list {
+        /* Collapsible AC Status Widget & Sub-task Status Widget */
+        #acStatusWidget.collapsed .dash-list,
+        #subTaskStatusWidget.collapsed .dash-list {
             display: none;
         }
 
@@ -695,7 +704,28 @@
         }
 
         .seg-closed {
-            background-color: #4caf50;
+            background-color: #388e3c;
+        }
+
+        /* AC Progress segment colors */
+        .seg-dev {
+            background-color: #ff9800;
+        }
+
+        .seg-qa {
+            background-color: #ffeb3b;
+        }
+
+        .seg-ba {
+            background-color: #9c27b0;
+        }
+
+        .seg-done {
+            background-color: #388e3c;
+        }
+
+        .seg-other {
+            background-color: #9e9e9e;
         }
 
         .report-total {
@@ -1392,7 +1422,10 @@
         let savedEmail = '';
         let savedApiToken = '';
         let isFetchingDevData = false; // Track if dev data is currently being fetched
+        let isFetchingSprintData = false; // Track if sprint details are currently being fetched
+        let lastSprintDetails = null; // Store fetched sprint details
         let isACStatusExpanded = false; // Persistent state for AC Status widget expansion
+        let isSubTaskStatusExpanded = false; // Persistent state for Sub-task Status widget expansion
 
         // Initialize module dropdown on page load
         function initializeModuleDropdown() {
@@ -2238,6 +2271,88 @@
                         '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/></svg>' :
                         '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>';
                 }
+            }
+        }
+
+        function toggleSubTaskStatus() {
+            isSubTaskStatusExpanded = !isSubTaskStatusExpanded;
+            const widget = document.getElementById('subTaskStatusWidget');
+            if (widget) {
+                if (isSubTaskStatusExpanded) {
+                    widget.classList.remove('collapsed');
+                } else {
+                    widget.classList.add('collapsed');
+                }
+                // Update toggle icon
+                const btn = widget.querySelector('.toggle-btn');
+                if (btn) {
+                    btn.innerHTML = isSubTaskStatusExpanded ?
+                        '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/></svg>' :
+                        '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>';
+                }
+            }
+        }
+
+        async function copySubTaskStatusWidget(event) {
+            const widget = document.getElementById('subTaskStatusWidget');
+            if (!widget) {
+                alert('Widget not found');
+                return;
+            }
+
+            const button = event ? (event.target.closest('.snapshot-icon') || event.target) : document.querySelector('#subTaskStatusWidget .snapshot-icon');
+            const svg = button ? button.querySelector('svg') : null;
+            const originalSvg = svg ? svg.outerHTML : null;
+
+            try {
+                // Capture the widget as canvas
+                const canvas = await html2canvas(widget, {
+                    backgroundColor: '#ffffff',
+                    scale: 2, // Higher quality
+                    logging: false
+                });
+
+                // Convert canvas to blob
+                canvas.toBlob(async (blob) => {
+                    if (!blob) {
+                        alert('Failed to create image');
+                        return;
+                    }
+
+                    try {
+                        // Copy to clipboard
+                        await navigator.clipboard.write([
+                            new ClipboardItem({
+                                'image/png': blob
+                            })
+                        ]);
+
+                        // Visual feedback - show checkmark
+                        if (svg) {
+                            svg.outerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="fill: #2e7d32;"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg>';
+                            setTimeout(() => {
+                                if (originalSvg) {
+                                    svg.outerHTML = originalSvg;
+                                }
+                            }, 2000);
+                        }
+                    } catch (err) {
+                        console.error('Failed to copy to clipboard:', err);
+                        // Fallback: download the image
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'sub-task-status-widget.png';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        alert('Image copied! If clipboard didn\'t work, the image was downloaded instead.');
+                    }
+                }, 'image/png');
+            } catch (err) {
+                console.error('Failed to capture widget:', err);
+                alert('Failed to capture widget as image');
             }
         }
 
@@ -3247,12 +3362,17 @@
         }
 
         function getStatusCategory(status) {
-            const statusLower = status.toLowerCase().trim();
+            const statusLower = (status || '').toLowerCase().trim();
+            const todoStatuses = ['backlog', 'ready for sprint'];
             const devStatuses = ['dev in progress', 'qa failed', 'ready for dev', 'dev complete', 'bug fixes - dev'];
             const qaStatuses = ['ready to review', 'qa in progress', 'review failed'];
             const baStatuses = ['review completed', 'qa complete', 'ba review'];
-            const doneStatuses = ['done'];
+            const blockedStatuses = ['blocked', 'awaiting clarification'];
+            const doneStatuses = ['done', 'descoped'];
 
+            if (todoStatuses.some(s => statusLower === s)) {
+                return 'Backlog';
+            }
             if (devStatuses.some(s => statusLower === s)) {
                 return 'Dev';
             }
@@ -3262,10 +3382,13 @@
             if (baStatuses.some(s => statusLower === s)) {
                 return 'BA';
             }
+            if (blockedStatuses.some(s => statusLower === s)) {
+                return 'Blocked';
+            }
             if (doneStatuses.some(s => statusLower === s)) {
                 return 'Done';
             }
-            return 'Other';
+            return 'Backlog'; // Default to Backlog and remove "Other"
         }
 
         const getReportCategory = (status) => {
@@ -3410,11 +3533,12 @@
 
             // Group statuses by category
             const statusByCategory = {
+                'Backlog': [],
                 'Dev': [],
                 'QA': [],
                 'BA': [],
-                'Done': [],
-                'Other': []
+                'Blocked': [],
+                'Done': []
             };
 
             Object.entries(statusCounts).forEach(([status, count]) => {
@@ -3434,7 +3558,7 @@
             });
 
             // Render status sections
-            const sectionOrder = ['Other', 'Dev', 'QA', 'BA', 'Done'];
+            const sectionOrder = ['Backlog', 'Dev', 'QA', 'BA', 'Blocked', 'Done'];
             const statusSections = sectionOrder.map(category => {
                 const statuses = statusByCategory[category];
                 // if (statuses.length === 0) return '';
@@ -3549,6 +3673,17 @@
 
             // Calculate Sub-task status report (for horizontal bar chart)
             const subTaskReportData = {};
+            const overallData = {
+                todo: { count: 0, sp: 0, vsp: 0 },
+                inprogress: { count: 0, sp: 0, vsp: 0 },
+                blocked: { count: 0, sp: 0, vsp: 0 },
+                review: { count: 0, sp: 0, vsp: 0 },
+                closed: { count: 0, sp: 0, vsp: 0 },
+                totalCount: 0,
+                totalSP: 0,
+                totalVSP: 0
+            };
+
             (lastDevSubtasks || []).forEach(t => {
                 const assignee = (t.assignee || 'Unassigned').trim();
                 const category = getReportCategory(t.status);
@@ -3560,44 +3695,217 @@
                 if (typeof sp !== 'number') sp = parseFloat(sp);
                 if (isNaN(sp)) sp = 0;
 
+                // Visual Weight Logic: Assume at least 1 SP for visualization if missing
+                const vsp = sp > 0 ? sp : 1;
+
+                // Initialize assignee data if not exists
                 if (!subTaskReportData[assignee]) {
                     subTaskReportData[assignee] = {
-                        todo: { count: 0, sp: 0 },
-                        inprogress: { count: 0, sp: 0 },
-                        blocked: { count: 0, sp: 0 },
-                        review: { count: 0, sp: 0 },
-                        closed: { count: 0, sp: 0 },
+                        todo: { count: 0, sp: 0, vsp: 0 },
+                        inprogress: { count: 0, sp: 0, vsp: 0 },
+                        blocked: { count: 0, sp: 0, vsp: 0 },
+                        review: { count: 0, sp: 0, vsp: 0 },
+                        closed: { count: 0, sp: 0, vsp: 0 },
                         totalCount: 0,
-                        totalSP: 0
+                        totalSP: 0,
+                        totalVSP: 0
                     };
                 }
+
+                // Update Assignee data
                 subTaskReportData[assignee][category].count++;
                 subTaskReportData[assignee][category].sp += sp;
+                subTaskReportData[assignee][category].vsp += vsp;
                 subTaskReportData[assignee].totalCount++;
                 subTaskReportData[assignee].totalSP += sp;
+                subTaskReportData[assignee].totalVSP += vsp;
+
+                // Update Overall aggregate data
+                overallData[category].count++;
+                overallData[category].sp += sp;
+                overallData[category].vsp += vsp;
+                overallData.totalCount++;
+                overallData.totalSP += sp;
+                overallData.totalVSP += vsp;
             });
 
-            const subTaskReportRows = Object.entries(subTaskReportData)
+            const renderReportRow = (label, data, isOverall = false) => {
+                // Denominator is based on Total Visual Story Points (VSP)
+                const getWidth = (vsp) => (data.totalVSP > 0 ? (vsp / data.totalVSP) * 100 : 0);
+                const formatSP = (val) => val % 1 === 0 ? val : val.toFixed(1);
+
+                // Overall row styling: blue background and a visible bottom border for separation gap
+                const rowStyle = isOverall ? ' style="background: rgba(24, 104, 219, 0.08); font-weight: 700; border-bottom: 3px solid #eee;"' : '';
+
+                return `
+                    <tr${rowStyle}>
+                        <td class="report-assignee" title="${label}">${label}</td>
+                        <td class="report-bar-cell">
+                            <div class="stacked-bar">
+                                ${data.todo.count > 0 ? `<div class="bar-segment seg-todo" style="width: ${getWidth(data.todo.vsp)}%" title="To Do: ${data.todo.count} (SP: ${formatSP(data.todo.sp)})"></div>` : ''}
+                                ${data.inprogress.count > 0 ? `<div class="bar-segment seg-inprogress" style="width: ${getWidth(data.inprogress.vsp)}%" title="In Progress: ${data.inprogress.count} (SP: ${formatSP(data.inprogress.sp)})"></div>` : ''}
+                                ${data.blocked.count > 0 ? `<div class="bar-segment seg-blocked" style="width: ${getWidth(data.blocked.vsp)}%" title="Blocked: ${data.blocked.count} (SP: ${formatSP(data.blocked.sp)})"></div>` : ''}
+                                ${data.review.count > 0 ? `<div class="bar-segment seg-review" style="width: ${getWidth(data.review.vsp)}%" title="Review: ${data.review.count} (SP: ${formatSP(data.review.sp)})"></div>` : ''}
+                                ${data.closed.count > 0 ? `<div class="bar-segment seg-closed" style="width: ${getWidth(data.closed.vsp)}%" title="Closed: ${data.closed.count} (SP: ${formatSP(data.closed.sp)})"></div>` : ''}
+                            </div>
+                        </td>
+                        <td class="report-total">${data.totalCount} (${formatSP(data.totalSP)})</td>
+                    </tr>
+                `;
+            };
+
+            const overallRowHtml = overallData.totalCount > 0 ? renderReportRow('Overall', overallData, true) : '';
+            const subTaskReportRows = overallRowHtml + Object.entries(subTaskReportData)
                 .sort((a, b) => b[1].totalCount - a[1].totalCount)
-                .map(([assignee, data]) => {
-                    const getWidth = (count) => (data.totalCount > 0 ? (count / data.totalCount) * 100 : 0);
-                    const formatSP = (val) => val % 1 === 0 ? val : val.toFixed(1);
-                    return `
-                        <tr>
-                            <td class="report-assignee" title="${assignee}">${assignee}</td>
-                            <td class="report-bar-cell">
-                                <div class="stacked-bar">
-                                    ${data.todo.count > 0 ? `<div class="bar-segment seg-todo" style="width: ${getWidth(data.todo.count)}%" title="ToDo: ${data.todo.count} (${formatSP(data.todo.sp)})"></div>` : ''}
-                                    ${data.inprogress.count > 0 ? `<div class="bar-segment seg-inprogress" style="width: ${getWidth(data.inprogress.count)}%" title="In Progress: ${data.inprogress.count} (${formatSP(data.inprogress.sp)})"></div>` : ''}
-                                    ${data.blocked.count > 0 ? `<div class="bar-segment seg-blocked" style="width: ${getWidth(data.blocked.count)}%" title="Blocked: ${data.blocked.count} (${formatSP(data.blocked.sp)})"></div>` : ''}
-                                    ${data.review.count > 0 ? `<div class="bar-segment seg-review" style="width: ${getWidth(data.review.count)}%" title="Review: ${data.review.count} (${formatSP(data.review.sp)})"></div>` : ''}
-                                    ${data.closed.count > 0 ? `<div class="bar-segment seg-closed" style="width: ${getWidth(data.closed.count)}%" title="Closed: ${data.closed.count} (${formatSP(data.closed.sp)})"></div>` : ''}
-                                </div>
-                            </td>
-                            <td class="report-total">${data.totalCount} (${formatSP(data.totalSP)})</td>
-                        </tr>
-                    `;
+                .map(([name, data]) => renderReportRow(name, data))
+                .join('');
+
+            // Calculate AC status report (ACs Progress)
+            const acReportData = {};
+            const overallACData = {
+                'Backlog': { count: 0, sp: 0, vsp: 0 },
+                Dev: { count: 0, sp: 0, vsp: 0 },
+                QA: { count: 0, sp: 0, vsp: 0 },
+                BA: { count: 0, sp: 0, vsp: 0 },
+                Blocked: { count: 0, sp: 0, vsp: 0 },
+                Done: { count: 0, sp: 0, vsp: 0 },
+                totalCount: 0,
+                totalSP: 0,
+                totalVSP: 0
+            };
+
+            tickets.forEach(t => {
+                const assignee = (t.assignee || 'Unassigned').trim();
+                const category = getStatusCategory(t.status);
+
+                const sp = typeof t.storyPoints === 'number' ? t.storyPoints : 0;
+                const vsp = sp > 0 ? sp : 1;
+
+                if (!acReportData[assignee]) {
+                    acReportData[assignee] = {
+                        'Backlog': { count: 0, sp: 0, vsp: 0 },
+                        Dev: { count: 0, sp: 0, vsp: 0 },
+                        QA: { count: 0, sp: 0, vsp: 0 },
+                        BA: { count: 0, sp: 0, vsp: 0 },
+                        Blocked: { count: 0, sp: 0, vsp: 0 },
+                        Done: { count: 0, sp: 0, vsp: 0 },
+                        totalCount: 0,
+                        totalSP: 0,
+                        totalVSP: 0
+                    };
+                }
+
+                acReportData[assignee][category].count++;
+                acReportData[assignee][category].sp += sp;
+                acReportData[assignee][category].vsp += vsp;
+                acReportData[assignee].totalCount++;
+                acReportData[assignee].totalSP += sp;
+                acReportData[assignee].totalVSP += vsp;
+
+                overallACData[category].count++;
+                overallACData[category].sp += sp;
+                overallACData[category].vsp += vsp;
+                overallACData.totalCount++;
+                overallACData.totalSP += sp;
+                overallACData.totalVSP += vsp;
+            });
+
+            const renderACReportRow = (label, data, isOverall = false) => {
+                const getWidth = (vsp) => (data.totalVSP > 0 ? (vsp / data.totalVSP) * 100 : 0);
+                const formatSP = (val) => val % 1 === 0 ? val : val.toFixed(1);
+                const rowStyle = isOverall ? ' style="background: rgba(24, 104, 219, 0.08); font-weight: 700; border-bottom: 3px solid #eee;"' : '';
+
+                return `
+                    <tr${rowStyle}>
+                        <td class="report-assignee" title="${label}">${label}</td>
+                        <td class="report-bar-cell">
+                            <div class="stacked-bar">
+                                ${data['Backlog'].count > 0 ? `<div class="bar-segment seg-todo" style="width: ${getWidth(data['Backlog'].vsp)}%" title="Backlog: ${data['Backlog'].count} (SP: ${formatSP(data['Backlog'].sp)})"></div>` : ''}
+                                ${data.Dev.count > 0 ? `<div class="bar-segment seg-dev" style="width: ${getWidth(data.Dev.vsp)}%" title="Dev: ${data.Dev.count} (SP: ${formatSP(data.Dev.sp)})"></div>` : ''}
+                                ${data.QA.count > 0 ? `<div class="bar-segment seg-qa" style="width: ${getWidth(data.QA.vsp)}%" title="QA: ${data.QA.count} (SP: ${formatSP(data.QA.sp)})"></div>` : ''}
+                                ${data.BA.count > 0 ? `<div class="bar-segment seg-ba" style="width: ${getWidth(data.BA.vsp)}%" title="BA: ${data.BA.count} (SP: ${formatSP(data.BA.sp)})"></div>` : ''}
+                                ${data.Blocked.count > 0 ? `<div class="bar-segment seg-blocked" style="width: ${getWidth(data.Blocked.vsp)}%" title="Blocked: ${data.Blocked.count} (SP: ${formatSP(data.Blocked.sp)})"></div>` : ''}
+                                ${data.Done.count > 0 ? `<div class="bar-segment seg-done" style="width: ${getWidth(data.Done.vsp)}%" title="Done: ${data.Done.count} (SP: ${formatSP(data.Done.sp)})"></div>` : ''}
+                            </div>
+                        </td>
+                        <td class="report-total">${data.totalCount} (${formatSP(data.totalSP)})</td>
+                    </tr>
+                `;
+            };
+
+            const overallACRowHtml = overallACData.totalCount > 0 ? renderACReportRow('Overall', overallACData, true) : '';
+            const acReportRows = overallACRowHtml + Object.entries(acReportData)
+                .sort((a, b) => b[1].totalCount - a[1].totalCount)
+                .map(([name, data]) => renderACReportRow(name, data))
+                .join('');
+
+            // Calculate Sub-task status by category
+            const subTaskStatusMap = {};
+            (lastDevSubtasks || []).forEach(t => {
+                const status = (t.status || 'Unknown').trim();
+                subTaskStatusMap[status] = (subTaskStatusMap[status] || 0) + 1;
+            });
+
+            const subTaskStatusByCategory = {
+                'To Do': [],
+                'In Progress': [],
+                'Review': [],
+                'Closed': [],
+                'Blocked': [],
+                'Other': []
+            };
+
+            const subTaskCatMap = {
+                'todo': 'To Do',
+                'inprogress': 'In Progress',
+                'review': 'Review',
+                'closed': 'Closed',
+                'blocked': 'Blocked'
+            };
+
+            Object.entries(subTaskStatusMap).forEach(([status, count]) => {
+                const reportCat = getReportCategory(status);
+                const category = subTaskCatMap[reportCat] || 'Other';
+                subTaskStatusByCategory[category].push({ status, count });
+            });
+
+            // Sort statuses within each category by count (descending)
+            Object.keys(subTaskStatusByCategory).forEach(category => {
+                subTaskStatusByCategory[category].sort((a, b) => b.count - a.count);
+            });
+
+            // Calculate category totals
+            const subTaskSectionTotals = {};
+            Object.keys(subTaskStatusByCategory).forEach(category => {
+                subTaskSectionTotals[category] = subTaskStatusByCategory[category].reduce((sum, { count }) => sum + count, 0);
+            });
+
+            // Render sub-task status sections
+            const subTaskSectionOrder = ['Other', 'To Do', 'In Progress', 'Blocked', 'Review', 'Closed'];
+            const subTaskStatusSections = subTaskSectionOrder.map(category => {
+                const statuses = subTaskStatusByCategory[category];
+                const sectionTotal = subTaskSectionTotals[category];
+                if (sectionTotal === 0 && category === 'Other') return '';
+
+                const sectionPercentage = totalSubTasks > 0 ? ((sectionTotal / totalSubTasks) * 100).toFixed(1) : '0.0';
+
+                const statusItems = statuses.map(({ status, count }) => {
+                    const percentage = totalSubTasks > 0 ? ((count / totalSubTasks) * 100).toFixed(1) : '0.0';
+                    return `<li><span>${status}</span><span>${count} (${percentage}%)</span></li>`;
                 }).join('');
+
+                return `
+                    <div class="dash-section">
+                        <div class="dash-section-title">
+                            <span>${category}</span>
+                            <span class="section-count">${sectionTotal} (${sectionPercentage}%)</span>
+                        </div>
+                        <ul class="dash-list">
+                            ${statusItems}
+                        </ul>
+                    </div>
+                `;
+            }).filter(section => section !== '').join('');
 
 
 
@@ -3635,6 +3943,30 @@
                     ${getFilterActionsButtons().tabs}
                 </div>
                 <div class="dash-grid">
+                    ${renderSprintDetailsWidget()}
+                    <div class="dash-card" id="frStatusWidget">
+                        <div class="widget-header">
+                            <h3>FR Status</h3>
+                            <button class="snapshot-icon" onclick="copyFRStatusWidget(event)" title="Copy widget as image">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5a3.5 3.5 0 0 1-3.5 3.5m7.5-10.5h-1.5l-1-1h-4l-1 1H9.5l-1 1H5c-1.11 0-2 .89-2 2v10c0 1.11.89 2 2 2h14c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="dash-section" style="margin-bottom: 0;">
+                            ${totalFRs > 0 ? generatePieChartSVG(
+                sortedStatuses.map(([label, value]) => ({ label, value })),
+                { 'Pending': '#9e9e9e', 'Partially Done': '#ff9800', 'Done': '#4caf50' },
+                totalFRs
+            ) : '<div class="empty-state" style="padding: 20px;">No FRs available</div>'}
+                        </div>
+                    </div>
+                    <div class="dash-card">
+                        <h3>QA Loop</h3>
+                        <ul class="dash-list">
+                            ${qaFailedList || '<li><span>0</span><span>0 tickets (0.0%)</span></li>'}
+                        </ul>
+                    </div>
                     <div class="dash-card ${isACStatusExpanded ? '' : 'collapsed'}" id="acStatusWidget">
                         <div class="widget-header">
                             <h3>AC Status</h3>
@@ -3649,6 +3981,7 @@
                                         <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5a3.5 3.5 0 0 1-3.5 3.5m7.5-10.5h-1.5l-1-1h-4l-1 1H9.5l-1 1H5c-1.11 0-2 .89-2 2v10c0 1.11.89 2 2 2h14c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2z"/>
                                     </svg>
                                 </button>
+                                <span class="section-count" style="font-weight: 700;">${totalTickets}</span>
                             </div>
                         </div>
                         ${statusSections || '<div class="dash-section"><div class="dash-section-title">Other</div><ul class="dash-list"><li><span>None</span><span>0 (0.0%)</span></li></ul></div>'}
@@ -3664,29 +3997,34 @@
                     </div>
                     <div class="dash-card">
                         <div class="widget-header">
-                            <h3>ACs Story Points</h3>
+                            <div>
+                                <h3>ACs Story Points</h3>
+                                <span class="widget-subtitle">1 story point = 4 hours</span>
+                            </div>
                             <span class="section-count" style="font-weight: 700;">${totalSP % 1 === 0 ? totalSP : totalSP.toFixed(1)}</span>
                         </div>
                         <ul class="dash-list">
                             ${assigneeSPList || '<li><span>None</span><span>0 (0.0%)</span></li>'}
                         </ul>
                     </div>
-                    <div class="dash-card" id="frStatusWidget">
+                    <div class="dash-card ${isSubTaskStatusExpanded ? '' : 'collapsed'}" id="subTaskStatusWidget">
                         <div class="widget-header">
-                            <h3>FR Status</h3>
-                            <button class="snapshot-icon" onclick="copyFRStatusWidget(event)" title="Copy widget as image">
-                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5a3.5 3.5 0 0 1-3.5 3.5m7.5-10.5h-1.5l-1-1h-4l-1 1H9.5l-1 1H5c-1.11 0-2 .89-2 2v10c0 1.11.89 2 2 2h14c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2z"/>
-                                </svg>
-                            </button>
+                            <h3>Sub Tasks Status</h3>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <button class="snapshot-icon toggle-btn" onclick="toggleSubTaskStatus()" title="${isSubTaskStatusExpanded ? 'Collapse' : 'Expand'}">
+                                    ${isSubTaskStatusExpanded ?
+                    '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/></svg>' :
+                    '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/></svg>'}
+                                </button>
+                                <button class="snapshot-icon" onclick="copySubTaskStatusWidget(event)" title="Copy widget as image">
+                                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5a3.5 3.5 0 0 1-3.5 3.5m7.5-10.5h-1.5l-1-1h-4l-1 1H9.5l-1 1H5c-1.11 0-2 .89-2 2v10c0 1.11.89 2 2 2h14c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2z"/>
+                                    </svg>
+                                </button>
+                                <span class="section-count" style="font-weight: 700;">${totalSubTasks}</span>
+                            </div>
                         </div>
-                        <div class="dash-section" style="margin-bottom: 0;">
-                            ${totalFRs > 0 ? generatePieChartSVG(
-                        sortedStatuses.map(([label, value]) => ({ label, value })),
-                        { 'Pending': '#9e9e9e', 'Partially Done': '#ff9800', 'Done': '#4caf50' },
-                        totalFRs
-                    ) : '<div class="empty-state" style="padding: 20px;">No FRs available</div>'}
-                        </div>
+                        ${isFetchingDevData ? '<div class="dash-section" style="text-align: center; color: #777; padding: 20px;">Loading sub-task status...</div>' : (subTaskStatusSections || '<div class="dash-section"><div class="dash-section-title">Other</div><ul class="dash-list"><li><span>None</span><span>0 (0.0%)</span></li></ul></div>')}
                     </div>
                     <div class="dash-card">
                         <div class="widget-header">
@@ -3701,7 +4039,10 @@
                     </div>
                     <div class="dash-card">
                         <div class="widget-header">
-                            <h3>Sub Tasks Story Points</h3>
+                            <div>
+                                <h3>Sub Tasks Story Points</h3>
+                                <span class="widget-subtitle">1 story point = 4 hours</span>
+                            </div>
                             <span class="section-count" style="font-weight: 700;">
                                 ${isFetchingDevData ? '<span style="font-size: 12px; font-weight: normal;">Fetching...</span>' : Math.round(totalSubTaskSP * 10) / 10}
                             </span>
@@ -3710,18 +4051,21 @@
                             ${isFetchingDevData ? '<li style="justify-content: center; color: #777;">Loading...</li>' : (subTasksSPList || '<li><span>None</span><span>0 (0.0%)</span></li>')}
                         </ul>
                     </div>
-                    <div class="dash-card">
-                        <h3>QA Loop</h3>
-                        <ul class="dash-list">
-                            ${qaFailedList || '<li><span>0</span><span>0 tickets (0.0%)</span></li>'}
-                        </ul>
+                    <div class="dash-card wide" id="acReportWidget">
+                        <div class="widget-header">
+                            <h3>ACs Progress</h3>
+                        </div>
+                        <div class="dash-section" style="margin-bottom: 0;">
+                            <table class="report-table">
+                                <tbody>
+                                    ${acReportRows || '<tr><td colspan="3" style="text-align: center; color: #777; padding: 20px;">No ACs available</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     <div class="dash-card wide" id="subTaskReportWidget">
                         <div class="widget-header">
                             <h3>Sub Tasks Progress</h3>
-                            <span class="section-count" style="font-weight: 700;">
-                                ${isFetchingDevData ? '<span style="font-size: 12px; font-weight: normal;">Fetching...</span>' : `${totalSubTasks} (${totalSubTaskSP % 1 === 0 ? totalSubTaskSP : totalSubTaskSP.toFixed(1)})`}
-                            </span>
                         </div>
                         <div class="dash-section" style="margin-bottom: 0;">
                             <table class="report-table">
@@ -3731,6 +4075,116 @@
                             </table>
                         </div>
                     </div>
+                </div>
+            `;
+        }
+
+        function renderSprintDetailsWidget() {
+            if (isFetchingSprintData || (!lastSprintDetails && isFetchingDevData)) {
+                return `
+                    <div class="dash-card">
+                        <div class="widget-header">
+                            <h3>Sprint Details</h3>
+                        </div>
+                        <div style="padding: 20px; text-align: center; color: #777;">
+                            Data loading...
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (!lastSprintDetails) {
+                return `
+                    <div class="dash-card">
+                        <div class="widget-header">
+                            <h3>Sprint Details</h3>
+                        </div>
+                        <div style="padding: 20px; text-align: center; color: #777;">
+                            No sprint details available.
+                        </div>
+                    </div>
+                `;
+            }
+
+            const sprint = lastSprintDetails;
+            const calculateWorkdays = (startDate, endDate) => {
+                if (!startDate || !endDate) return 'N/A';
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                if (isNaN(start.getTime()) || isNaN(end.getTime())) return 'N/A';
+
+                // Normalize to midnight for accurate comparison
+                start.setHours(0, 0, 0, 0);
+                end.setHours(0, 0, 0, 0);
+
+                let count = 0;
+                let cur = new Date(start.getTime());
+                while (cur <= end) {
+                    const dayOfWeek = cur.getDay();
+                    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                        count++;
+                    }
+                    cur.setDate(cur.getDate() + 1);
+                }
+                return count;
+            };
+
+            const formatDate = (dateStr) => {
+                if (!dateStr) return 'N/A';
+                try {
+                    const date = new Date(dateStr);
+                    return date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                } catch (e) {
+                    return 'N/A';
+                }
+            };
+
+            return `
+                <div class="dash-card">
+                    <div class="widget-header">
+                        <h3>Sprint Details</h3>
+                    </div>
+                    <ul class="dash-list">
+                        <li><span>Sprint Name</span><span>${sprint.name || 'N/A'}</span></li>
+                        <li><span>Status</span><span style="text-transform: capitalize;">${sprint.state || 'N/A'}</span></li>
+                        <li><span>Start Date</span><span>${formatDate(sprint.startDate)}</span></li>
+                        <li><span>End Date</span><span>${formatDate(sprint.endDate)}</span></li>
+                        <li><span>Total Days</span><span>${calculateWorkdays(sprint.startDate, sprint.endDate)}</span></li>
+                        ${sprint.state === 'active' ? (() => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const endDate = new Date(sprint.endDate);
+                    endDate.setHours(0, 0, 0, 0);
+
+                    const isOverdue = today > endDate;
+
+                    let daysLeft = 0;
+                    if (isOverdue) {
+                        // For overdue, count workdays between endDate and today (exclusive of endDate itself)
+                        // calculateWorkdays is inclusive, so we start from tomorrow of endDate
+                        const nextDay = new Date(endDate);
+                        nextDay.setDate(nextDay.getDate() + 1);
+                        daysLeft = calculateWorkdays(nextDay, today);
+                    } else {
+                        // For active, count workdays between today and endDate
+                        daysLeft = calculateWorkdays(today, endDate);
+                        // If today is a workday, it is included in daysLeft. 
+                        // This matches the user's expectation of 5 days left when today is Saturday (Jan 3)
+                        // and the remaining workdays are Mon-Fri (Jan 5-9).
+                    }
+
+                    const colorStyle = isOverdue ? ' style="color: #d32f2f; font-weight: bold;"' : '';
+                    const label = isOverdue ? 'Overdue' : 'Days Left';
+                    const prefix = isOverdue ? '+' : '';
+
+                    return `<li><span>${label}</span><span${colorStyle}>${prefix}${daysLeft}</span></li>`;
+                })() : ''}
+                        ${sprint.state === 'closed' ? `<li><span>Completion Date</span><span>${formatDate(sprint.completeDate)}</span></li>` : ''}
+                    </ul>
                 </div>
             `;
         }
@@ -3964,6 +4418,7 @@
             }
 
             isFetchingDevData = true;
+            isFetchingSprintData = true;
 
             // Trigger dashboard update to show loading state in the widget
             if (viewMode === 'dashboard') {
@@ -4003,19 +4458,34 @@
                     sprintId: sprintId
                 };
 
-                const [subtaskResp, bugsResp] = await Promise.all([
+                const sprintUrl = `${SCRIPT_URL}?email=${encodeURIComponent(email)}&apiToken=${encodeURIComponent(apiToken)}&requestType=sprint_details&sprintId=${encodeURIComponent(sprintId)}`;
+                const sprintPayload = {
+                    requestType: 'sprint_details',
+                    email: email,
+                    apiToken: apiToken,
+                    sprintId: sprintId
+                };
+
+                const [subtaskResp, bugsResp, sprintResp] = await Promise.all([
                     fetch(subtaskUrl, { method: 'POST', body: JSON.stringify(subtaskPayload) }),
-                    fetch(bugsUrl, { method: 'POST', body: JSON.stringify(bugsPayload) })
+                    fetch(bugsUrl, { method: 'POST', body: JSON.stringify(bugsPayload) }),
+                    fetch(sprintUrl, { method: 'POST', body: JSON.stringify(sprintPayload) })
                 ]);
 
                 const subtaskData = await subtaskResp.json();
                 const bugsData = await bugsResp.json();
+                const sprintData = await sprintResp.json();
 
                 if (!subtaskData.success) {
                     throw new Error(subtaskData.error || 'Subtask fetch failed');
                 }
                 if (!bugsData.success) {
                     console.warn("Bugs detailed fetch failed:", bugsData.error);
+                }
+                if (sprintData.success) {
+                    lastSprintDetails = sprintData.sprint;
+                } else {
+                    console.warn("Sprint details fetch failed:", sprintData.error);
                 }
 
                 // Store data
@@ -4062,6 +4532,7 @@
 
             } finally {
                 isFetchingDevData = false;
+                isFetchingSprintData = false;
                 // If currently in Dev View, we should re-render or at least remove loading state
                 if (viewMode === 'dev') {
                     // We can try to render results if container exists
@@ -5324,7 +5795,9 @@
                 const formData = { email, apiToken, parent };
                 if (sprintId && sprintId.trim() !== '') {
                     formData.sprintId = sprintId;
+                    isFetchingSprintData = true;
                 }
+                isFetchingDevData = true;
                 const formBody = new URLSearchParams(formData).toString();
 
                 const response = await fetch(SCRIPT_URL, {
