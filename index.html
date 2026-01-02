@@ -963,6 +963,83 @@
             fill: #1868DB;
         }
 
+        /* Pie Chart Styles */
+        .pie-chart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 0;
+            position: relative;
+        }
+
+        .pie-chart-svg {
+            width: 200px;
+            height: 200px;
+            transform: rotate(-90deg);
+            border-radius: 50%;
+        }
+
+        .pie-slice {
+            transition: opacity 0.2s, transform 0.2s;
+            cursor: pointer;
+            stroke: #fff;
+            stroke-width: 0.02;
+        }
+
+        .pie-slice:hover {
+            opacity: 0.8;
+            transform: scale(1.02);
+            transform-origin: center;
+        }
+
+        .pie-center-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .pie-center-count {
+            display: block;
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            line-height: 1;
+        }
+
+        .pie-center-label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        .pie-legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
         /* Subtask Grouping Styles */
         .subtask-group {
             margin-bottom: 24px;
@@ -2236,7 +2313,103 @@
             renderTickets(lastTickets);
         }
 
-        // Helper function to escape CSV values
+        // --- Pie Chart Helper ---
+        function generatePieChartSVG(data, colors, totalValue) {
+            if (!data || data.length === 0 || totalValue === 0) return '';
+
+            const legendHtml = `
+                <div class="pie-legend">
+                    ${data.map(slice => `
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: ${colors[slice.label] || '#ccc'}"></div>
+                            <span>${slice.label} (${slice.value})</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            // Handle case where one slice is 100% or only one slice exists
+            const nonZeroSlices = data.filter(d => d.value > 0);
+            if (nonZeroSlices.length === 1) {
+                const slice = nonZeroSlices[0];
+                const percentage = ((slice.value / totalValue) * 100).toFixed(1);
+                return `
+                    <div class="pie-chart-container">
+                        <svg viewBox="0 0 2 2" class="pie-chart-svg" style="display: block;">
+                            <circle cx="1" cy="1" r="1" fill="${colors[slice.label] || '#ccc'}" class="pie-slice"
+                                    onmouseover="updatePieCenter('${slice.value}', '${slice.label} (${percentage}%)')"
+                                    onmouseout="updatePieCenter('${totalValue}', 'Total FRs')">
+                                <title>${slice.label}: ${slice.value} (${percentage}%)</title>
+                            </circle>
+                        </svg>
+                        <div class="pie-center-text" id="pieCenterText">
+                            <span class="pie-center-count" id="pieCenterCount">${totalValue}</span>
+                            <span class="pie-center-label" id="pieCenterLabel">Total FRs</span>
+                        </div>
+                    </div>
+                    ${legendHtml}
+                `;
+            }
+
+            let cumulativePercent = 0;
+            const slices = data.filter(slice => slice.value > 0).map(slice => {
+                const startPercent = cumulativePercent;
+                const percent = slice.value / totalValue;
+                cumulativePercent += percent;
+
+                const [startX, startY] = getCoordinatesForPercent(startPercent);
+                const [endX, endY] = getCoordinatesForPercent(cumulativePercent);
+
+                const largeArcFlag = percent > 0.5 ? 1 : 0;
+
+                const pathData = [
+                    `M 1 1`, // Move to center
+                    `L ${startX} ${startY}`, // Line to start
+                    `A 1 1 0 ${largeArcFlag} 1 ${endX} ${endY}`, // Arc
+                    `Z` // Close
+                ].join(' ');
+
+                const percentage = (percent * 100).toFixed(1);
+                return `
+                    <path d="${pathData}" 
+                          fill="${colors[slice.label] || '#ccc'}" 
+                          class="pie-slice"
+                          onmouseover="updatePieCenter('${slice.value}', '${slice.label} (${percentage}%)')"
+                          onmouseout="updatePieCenter('${totalValue}', 'Total FRs')">
+                        <title>${slice.label}: ${slice.value} (${percentage}%)</title>
+                    </path>
+                `;
+            }).join('');
+
+            return `
+                <div class="pie-chart-container">
+                    <svg viewBox="0 0 2 2" class="pie-chart-svg" style="display: block;">
+                        ${slices}
+                    </svg>
+                    <div class="pie-center-text" id="pieCenterText">
+                        <span class="pie-center-count" id="pieCenterCount">${totalValue}</span>
+                        <span class="pie-center-label" id="pieCenterLabel">Total FRs</span>
+                    </div>
+                </div>
+                ${legendHtml}
+            `;
+        }
+
+        function getCoordinatesForPercent(percent) {
+            const x = Math.cos(2 * Math.PI * percent);
+            const y = Math.sin(2 * Math.PI * percent);
+            // Translate from (-1,1) to (0,2) space with center at (1,1)
+            return [x + 1, y + 1];
+        }
+
+        function updatePieCenter(count, label) {
+            const countEl = document.getElementById('pieCenterCount');
+            const labelEl = document.getElementById('pieCenterLabel');
+            if (countEl) countEl.textContent = count;
+            if (labelEl) labelEl.textContent = label;
+        }
+
+        // --- Helper function to escape CSV values ---
         function escapeCSV(value) {
             if (value === null || value === undefined) return '';
             const stringValue = String(value);
@@ -3495,9 +3668,13 @@
                                 </svg>
                             </button>
                         </div>
-                        <ul class="dash-list">
-                            ${frStatusList || '<li><span>No FRs</span><span>0 (0.0%)</span></li>'}
-                        </ul>
+                        <div class="dash-section" style="margin-bottom: 0;">
+                            ${totalFRs > 0 ? generatePieChartSVG(
+                        sortedStatuses.map(([label, value]) => ({ label, value })),
+                        { 'Pending': '#9e9e9e', 'Partially Done': '#ff9800', 'Done': '#4caf50' },
+                        totalFRs
+                    ) : '<div class="empty-state" style="padding: 20px;">No FRs available</div>'}
+                        </div>
                     </div>
                     <div class="dash-card">
                         <div class="widget-header">
