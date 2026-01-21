@@ -1374,6 +1374,26 @@
 
         // Module configuration - Add new modules here by providing module ID, display name, and EM ID
         const modules = {
+            title1: {
+                name: 'Sprint 5 - Title IV-E',
+                emId: 'EM-8078',
+                sprintId: '1263'
+            },
+            assessments2: {
+                name: 'Sprint 5 - Assessments',
+                emId: 'EM-1460',
+                sprintId: '1229'
+            },
+            case1: {
+                name: 'Sprint 5 - Case Management',
+                emId: 'EM-1912',
+                sprintId: '1264'
+            },
+            testmodule: {
+                name: 'Testmodule',
+                emId: 'EM-5860',
+                sprintId: ''
+            },
             licensing: {
                 name: 'Sprint 4 - Licensing',
                 emId: 'EM-896',
@@ -1383,11 +1403,6 @@
                 name: 'Sprint 4 - Assessments',
                 emId: 'EM-1460',
                 sprintId: '1128'
-            },
-            testmodule: {
-                name: 'Testmodule',
-                emId: 'EM-5860',
-                sprintId: ''
             },
             licensing2: {
                 name: 'Sprint 3 - Licensing',
@@ -1406,7 +1421,7 @@
             // }
         };
 
-        let activeModule = 'licensing'; // Default module
+        let activeModule = 'title1'; // Default module
         let viewMode = 'dashboard'; // 'table' | 'dashboard' | 'fr' | 'worklog' | 'sprintplan' | 'dev'
         let lastTickets = [];
         let frDataCache = [];
@@ -2128,7 +2143,7 @@
         function updateDashboardButton() {
             const btn = document.getElementById('dashboardBtn');
             if (!btn) return;
-            btn.textContent = viewMode === 'dashboard' ? 'AC View' : 'Dashboard';
+            btn.textContent = viewMode === 'dashboard' ? 'Story View' : 'Dashboard';
         }
 
         async function copyFRStatusWidget(event) {
@@ -2773,7 +2788,7 @@
             // View toggle buttons - Always show all tabs
             const viewConfigs = [
                 { id: 'dashboard', label: 'Dashboard', onClick: "toggleView('dashboard')" },
-                { id: 'table', label: 'AC View', onClick: "toggleView('table')" },
+                { id: 'table', label: 'Story View', onClick: "toggleView('table')" },
                 { id: 'fr', label: 'FR View', onClick: "toggleView('fr')" },
                 { id: 'worklog', label: 'Worklog', onClick: "toggleView('worklog')" },
                 { id: 'sprintplan', label: 'Sprint Plan β', onClick: "toggleView('sprintplan')" },
@@ -2782,7 +2797,7 @@
 
             viewConfigs.forEach(conf => {
                 const isActive = (viewMode === conf.id);
-                // For AC View tab, we special case the click to toggleView('table')
+                // For Story View tab, we special case the click to toggleView('table')
                 // For Dashboard tab, we special case the click to toggleView('dashboard')
                 tabs.push(`<button class="clear-btn ${isActive ? 'active' : ''}" type="button" onclick="${conf.onClick}">${conf.label}</button>`);
             });
@@ -4229,7 +4244,7 @@
                     </div>
                     <div class="dash-card ${isACStatusExpanded ? '' : 'collapsed'}" id="acStatusWidget">
                         <div class="widget-header">
-                            <h3>AC Status</h3>
+                            <h3>Story Status</h3>
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <button class="snapshot-icon toggle-btn" onclick="toggleACStatusSections()" title="${isACStatusExpanded ? 'Collapse' : 'Expand'}">
                                     ${isACStatusExpanded ?
@@ -4248,7 +4263,7 @@
                     </div>
                     <div class="dash-card">
                         <div class="widget-header">
-                            <h3>AC Ownership</h3>
+                            <h3>Story Ownership</h3>
                             <span class="section-count" style="font-weight: 700;">${totalTickets}</span>
                         </div>
                         <ul class="dash-list">
@@ -4258,7 +4273,7 @@
                     <div class="dash-card">
                         <div class="widget-header">
                             <div>
-                                <h3>AC Story Points</h3>
+                                <h3>Story Points</h3>
                                 <span class="widget-subtitle">1 story point = 4 hours</span>
                             </div>
                             <span class="section-count" style="font-weight: 700;">${totalSP % 1 === 0 ? totalSP : totalSP.toFixed(1)}</span>
@@ -4284,31 +4299,31 @@
                                 <span class="section-count" style="font-weight: 700;">${totalSubTasks}</span>
                             </div>
                         </div>
-                        ${isFetchingDevData ? '<div class="dash-section" style="text-align: center; color: #777; padding: 20px;">Loading sub-task status...</div>' : (subTaskStatusSections || '<div class="dash-section"><div class="dash-section-title">Other</div><ul class="dash-list"><li><span>None</span><span>0 (0.0%)</span></li></ul></div>')}
+                        ${isFetchingDevData ? '<div class="dash-section" style="text-align: center; color: #777; padding: 20px;">Loading sub-task status...</div>' : (subTaskStatusSections || '<div class="dash-section"><div class="dash-section-title">Other</div><ul class="dash-list"><li><span>No data</span><span>0 (0.0%)</span></li></ul></div>')}
                     </div>
                     <div class="dash-card">
                         <div class="widget-header">
                             <h3>Sub Tasks Assignee</h3>
                             <span class="section-count" style="font-weight: 700;">
-                                ${isFetchingDevData ? '<span style="font-size: 12px; font-weight: normal;">Fetching...</span>' : totalSubTasks}
+                                ${isFetchingDevData ? '<span style="font-size: 12px; font-weight: normal;">Fetching...</span>' : (totalSubTasks > 0 ? totalSubTasks : 'No data')}
                             </span>
                         </div>
                         <ul class="dash-list">
-                            ${isFetchingDevData ? '<li style="justify-content: center; color: #777;">Loading...</li>' : (subTasksCountList || '<li><span>None</span><span>0 (0.0%)</span></li>')}
+                            ${isFetchingDevData ? '<li style="justify-content: center; color: #777;">Loading...</li>' : (subTasksCountList || '<li><span>No data</span><span>0 (0.0%)</span></li>')}
                         </ul>
                     </div>
                     <div class="dash-card">
                         <div class="widget-header">
                             <div>
-                                <h3>Sub Tasks Story Points</h3>
+                                <h3>Sub Tasks Points</h3>
                                 <span class="widget-subtitle">1 story point = 4 hours</span>
                             </div>
                             <span class="section-count" style="font-weight: 700;">
-                                ${isFetchingDevData ? '<span style="font-size: 12px; font-weight: normal;">Fetching...</span>' : Math.round(totalSubTaskSP * 10) / 10}
+                                ${isFetchingDevData ? '<span style="font-size: 12px; font-weight: normal;">Fetching...</span>' : (totalSubTaskSP > 0 ? Math.round(totalSubTaskSP * 10) / 10 : 'No data')}
                             </span>
                         </div>
                         <ul class="dash-list">
-                            ${isFetchingDevData ? '<li style="justify-content: center; color: #777;">Loading...</li>' : (subTasksSPList || '<li><span>None</span><span>0 (0.0%)</span></li>')}
+                            ${isFetchingDevData ? '<li style="justify-content: center; color: #777;">Loading...</li>' : (subTasksSPList || '<li><span>No data</span><span>0 (0.0%)</span></li>')}
                         </ul>
                     </div>
                     <div class="dash-card ${isBugStatusExpanded ? '' : 'collapsed'}" id="bugStatusWidget">
@@ -4328,7 +4343,7 @@
                                 <span class="section-count" style="font-weight: 700;">${totalBugsCount}</span>
                             </div>
                         </div>
-                        ${isFetchingDevData ? '<div class="dash-section" style="text-align: center; color: #777; padding: 20px;">Loading bug status...</div>' : (bugStatusSections || '<div class="dash-section"><div class="dash-section-title">Other</div><ul class="dash-list"><li><span>None</span><span>0 (0.0%)</span></li></ul></div>')}
+                        ${isFetchingDevData ? '<div class="dash-section" style="text-align: center; color: #777; padding: 20px;">Loading bug status...</div>' : (bugStatusSections || '<div class="dash-section"><div class="dash-section-title">Other</div><ul class="dash-list"><li><span>No data</span><span>0 (0.0%)</span></li></ul></div>')}
                     </div>
                     <div class="dash-card" id="pendingBugsPriorityWidget">
                         <div class="widget-header">
@@ -4346,7 +4361,7 @@
                         totalPendingBugs,
                         'Pending Bugs',
                         'PendingBugs'
-                    ) : '<div class="empty-state" style="padding: 20px;">No pending bugs available</div>')}
+                    ) : '<div class="empty-state" style="padding: 20px;">No data</div>')}
                         </div>
                     </div>
                     <div class="dash-card wide" id="acReportWidget">
@@ -4368,7 +4383,7 @@
                         <div class="dash-section" style="margin-bottom: 0;">
                             <table class="report-table">
                                 <tbody>
-                                    ${isFetchingDevData ? '<tr><td colspan="3" style="text-align: center; color: #777; padding: 20px;">Loading sub-task data...</td></tr>' : (subTaskReportRows || '<tr><td colspan="3" style="text-align: center; color: #777; padding: 20px;">No sub-tasks available</td></tr>')}
+                                    ${isFetchingDevData ? '<tr><td colspan="3" style="text-align: center; color: #777; padding: 20px;">Loading sub-task data...</td></tr>' : (subTaskReportRows || '<tr><td colspan="3" style="text-align: center; color: #777; padding: 20px;">No data</td></tr>')}
                                 </tbody>
                             </table>
                         </div>
@@ -4385,7 +4400,7 @@
                             <h3>Sprint Details</h3>
                         </div>
                         <div style="padding: 20px; text-align: center; color: #777;">
-                            Data loading...
+                            ${isFetchingSprintData ? 'Data loading...' : 'No data'}
                         </div>
                     </div>
                 `;
@@ -4695,36 +4710,18 @@
         }
 
         async function fetchDevDataOnly() {
-            // Extract subtask keys from currently loaded tickets
-            if (!lastTickets || lastTickets.length === 0) {
-                return;
-            }
+            if (!lastTickets || lastTickets.length === 0) return;
 
             const keys = lastTickets.flatMap(t => t.subtaskKeys || []);
-
-            if (keys.length === 0) {
-                // If no subtasks, just clear subtasks
-                lastDevSubtasks = [];
-                // But still initialize assignee filters from main tickets
-                const initialAssigneeSet = new Set();
-                (lastTickets || []).forEach(t => {
-                    initialAssigneeSet.add(t.assignee || 'Unassigned');
-                    (t.linkedBugs || []).forEach(b => initialAssigneeSet.add(b.assignee || 'Unassigned'));
-                });
-                devAssigneeFilters = Array.from(initialAssigneeSet);
-                return;
-            }
 
             isFetchingDevData = true;
             isFetchingSprintData = true;
 
-            // Trigger dashboard update to show loading state in the widget
             if (viewMode === 'dashboard') {
                 renderDashboard(lastTickets);
             }
 
             try {
-                // Construct URL (using centralized SCRIPT_URL)
                 const email = savedEmail || document.getElementById('emailInput')?.value;
                 const apiToken = savedApiToken || document.getElementById('tokenInput')?.value;
 
@@ -4732,21 +4729,33 @@
                     throw new Error("Missing credentials. Please ensure you are logged in.");
                 }
 
-                // Parent and Sprint info for GET requests
                 const currentModule = modules[activeModule];
                 const parent = currentModule.emId;
                 const sprintId = currentModule.sprintId;
 
-                // Construct concurrent requests
-                const subtaskUrl = `${SCRIPT_URL}?email=${encodeURIComponent(email)}&apiToken=${encodeURIComponent(apiToken)}&requestType=post_search`;
-                const subtaskPayload = {
-                    requestType: 'post_search',
-                    email: email,
-                    apiToken: apiToken,
-                    keys: keys,
-                    fields: ['summary', 'status', 'assignee', 'storyPoints', 'customfield_10048', 'customfield_10026', 'customfield_10016', 'customfield_10034', 'issuetype', 'parent', 'priority']
-                };
+                const fetchPromises = [];
+                let subtaskIndex = -1;
+                let bugsIndex = -1;
+                let sprintIndex = -1;
 
+                // 1. Subtasks (Conditional)
+                if (keys.length > 0) {
+                    subtaskIndex = fetchPromises.length;
+                    const subtaskUrl = `${SCRIPT_URL}?email=${encodeURIComponent(email)}&apiToken=${encodeURIComponent(apiToken)}&requestType=post_search`;
+                    const subtaskPayload = {
+                        requestType: 'post_search',
+                        email: email,
+                        apiToken: apiToken,
+                        keys: keys,
+                        fields: ['summary', 'status', 'assignee', 'storyPoints', 'customfield_10048', 'customfield_10026', 'customfield_10016', 'customfield_10034', 'issuetype', 'parent', 'priority']
+                    };
+                    fetchPromises.push(fetch(subtaskUrl, { method: 'POST', body: JSON.stringify(subtaskPayload) }).then(r => r.json()));
+                } else {
+                    lastDevSubtasks = [];
+                }
+
+                // 2. Bugs (Always)
+                bugsIndex = fetchPromises.length;
                 const bugsUrl = `${SCRIPT_URL}?email=${encodeURIComponent(email)}&apiToken=${encodeURIComponent(apiToken)}&requestType=fetch_bugs&parent=${encodeURIComponent(parent)}&sprintId=${encodeURIComponent(sprintId)}&maxResults=500`;
                 const bugsPayload = {
                     requestType: 'fetch_bugs',
@@ -4755,7 +4764,10 @@
                     parent: parent,
                     sprintId: sprintId
                 };
+                fetchPromises.push(fetch(bugsUrl, { method: 'POST', body: JSON.stringify(bugsPayload) }).then(r => r.json()));
 
+                // 3. Sprint Details (Always)
+                sprintIndex = fetchPromises.length;
                 const sprintUrl = `${SCRIPT_URL}?email=${encodeURIComponent(email)}&apiToken=${encodeURIComponent(apiToken)}&requestType=sprint_details&sprintId=${encodeURIComponent(sprintId)}`;
                 const sprintPayload = {
                     requestType: 'sprint_details',
@@ -4763,44 +4775,38 @@
                     apiToken: apiToken,
                     sprintId: sprintId
                 };
+                fetchPromises.push(fetch(sprintUrl, { method: 'POST', body: JSON.stringify(sprintPayload) }).then(r => r.json()));
 
-                const [subtaskResp, bugsResp, sprintResp] = await Promise.all([
-                    fetch(subtaskUrl, { method: 'POST', body: JSON.stringify(subtaskPayload) }),
-                    fetch(bugsUrl, { method: 'POST', body: JSON.stringify(bugsPayload) }),
-                    fetch(sprintUrl, { method: 'POST', body: JSON.stringify(sprintPayload) })
-                ]);
+                const results = await Promise.all(fetchPromises);
 
-                const subtaskData = await subtaskResp.json();
-                const bugsData = await bugsResp.json();
-                const sprintData = await sprintResp.json();
-
-                if (!subtaskData.success) {
-                    throw new Error(subtaskData.error || 'Subtask fetch failed');
+                if (subtaskIndex !== -1) {
+                    const subtaskData = results[subtaskIndex];
+                    if (!subtaskData.success) throw new Error(subtaskData.error || 'Subtask fetch failed');
+                    lastDevSubtasks = subtaskData.tickets || [];
                 }
-                if (!bugsData.success) {
+
+                const bugsData = results[bugsIndex];
+                if (bugsData.success) {
+                    lastDevBugsDetailed = bugsData.tickets || [];
+                } else {
                     console.warn("Bugs detailed fetch failed:", bugsData.error);
                 }
+
+                const sprintData = results[sprintIndex];
                 if (sprintData.success) {
                     lastSprintDetails = sprintData.sprint;
                 } else {
                     console.warn("Sprint details fetch failed:", sprintData.error);
                 }
 
-                // Store data
-                lastDevSubtasks = subtaskData.tickets || [];
-                lastDevBugsDetailed = bugsData.tickets || [];
-
-
-
-                // key: Initialize filters with all assignees and statuses from parents AND fetched subtasks (and their bugs)
+                // Initialize filters with all assignees and statuses
                 const initialAssigneeSet = new Set();
                 const initialStatusSet = new Set();
 
-                (lastTickets || []).forEach(t => {
+                const processForFilters = (t) => {
                     initialAssigneeSet.add(t.assignee || 'Unassigned');
                     initialStatusSet.add(t.status);
                     (t.linkedBugs || []).forEach(b => {
-                        // Supplement linked bug with detailed info if available
                         const bugDetail = lastDevBugsDetailed.find(bd => bd.key === b.key);
                         if (bugDetail) {
                             b.assignee = bugDetail.assignee;
@@ -4809,36 +4815,22 @@
                         initialAssigneeSet.add(b.assignee || 'Unassigned');
                         initialStatusSet.add(b.status);
                     });
-                });
-                (lastDevSubtasks || []).forEach(t => {
-                    initialAssigneeSet.add(t.assignee || 'Unassigned');
-                    initialStatusSet.add(t.status);
-                    (t.linkedBugs || []).forEach(b => {
-                        // Supplement linked bug with detailed info if available
-                        const bugDetail = lastDevBugsDetailed.find(bd => bd.key === b.key);
-                        if (bugDetail) {
-                            b.assignee = bugDetail.assignee;
-                            b.dueDate = bugDetail.dueDate;
-                        }
-                        initialAssigneeSet.add(b.assignee || 'Unassigned');
-                        initialStatusSet.add(b.status);
-                    });
-                });
+                };
 
-                devAssigneeFilters = Array.from(initialAssigneeSet); // Select all by default
-                devStatusFilters = Array.from(initialStatusSet); // Select all by default
+                (lastTickets || []).forEach(processForFilters);
+                (lastDevSubtasks || []).forEach(processForFilters);
 
+                devAssigneeFilters = Array.from(initialAssigneeSet);
+                devStatusFilters = Array.from(initialStatusSet);
+
+            } catch (error) {
+                console.error("Fetch Error:", error);
             } finally {
                 isFetchingDevData = false;
                 isFetchingSprintData = false;
-                // If currently in Dev View, we should re-render or at least remove loading state
                 if (viewMode === 'dev') {
-                    // We can try to render results if container exists
-                    if (document.getElementById('devResultsContainer')) {
-                        renderPostResults();
-                    }
+                    if (document.getElementById('devResultsContainer')) renderPostResults();
                 } else if (viewMode === 'dashboard') {
-                    // Update dashboard if we're on it, to show subtask stats
                     renderDashboard(lastTickets);
                 }
             }
