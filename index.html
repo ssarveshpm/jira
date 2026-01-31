@@ -11,7 +11,7 @@
         // JIRA Apps Script URL - Update this when you deploy a new version
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzWW-2bhd-_AGvIl2p1167B6A4MECQDr755-ZMWj6U46eZQ0uIYeTLPsxgl3xdycffMPw/exec';
         const JIRA_BASE_URL = 'https://cardyai-hawaii.atlassian.net/browse/';
-        const APP_VERSION = '1.22.0';
+        const APP_VERSION = '3.12.34';
     </script>
     <style>
         * {
@@ -1539,6 +1539,7 @@
             { id: 'assignee', label: 'Assignee', sortable: 'assignee' },
             { id: 'priority', label: 'Priority', sortable: 'priority' },
             { id: 'storyPoints', label: 'Story Points', sortable: 'storyPoints' },
+            { id: 'qaStoryPoints', label: 'QA Story Points', sortable: 'qaStoryPoints' },
             { id: 'dueDate', label: 'Due Date', sortable: 'dueDate' },
             { id: 'timeOriginalEstimate', label: 'Estimate', sortable: 'timeOriginalEstimate' },
             { id: 'actualHours', label: 'Time Spent', sortable: 'actualHours' },
@@ -1574,6 +1575,7 @@
                 assignee: true,
                 priority: false,
                 storyPoints: true,
+                qaStoryPoints: false,
                 dueDate: true,
                 timeOriginalEstimate: true,
                 actualHours: true,
@@ -1607,6 +1609,7 @@
                 dueDate: '',
                 totalBugs: '',
                 openBugs: '',
+                qaStoryPoints: '',
                 subTaskCount: ''
             };
         }
@@ -3336,8 +3339,13 @@
                 const qaFailed = String(typeof t.qaFailedCount === 'number' ? t.qaFailedCount : '').toLowerCase().includes(filters.qaFailedCount);
                 const totalBugs = String(typeof t.totalBugs === 'number' ? t.totalBugs : '').toLowerCase().includes(filters.totalBugs);
                 const openBugs = String(typeof t.openBugs === 'number' ? t.openBugs : '').toLowerCase().includes(filters.openBugs);
+
+                let qaSp = t.qaStoryPoints || t.customfield_10101;
+                if (typeof qaSp !== 'number') qaSp = parseFloat(qaSp);
+                const qaStoryPoints = (isNaN(qaSp) ? '' : Math.round(qaSp * 10) / 10).toString().toLowerCase().includes(filters.qaStoryPoints);
+
                 const subTaskCount = String(typeof t.subTaskCount === 'number' ? t.subTaskCount : 0).toLowerCase().includes(filters.subTaskCount);
-                return key && summary && status && assignee && priority && storyPoints && timeEstimate && actualHrs && timeDiff && created && updated && dueDate && qaFailed && totalBugs && openBugs && subTaskCount;
+                return key && summary && status && assignee && priority && storyPoints && timeEstimate && actualHrs && timeDiff && created && updated && dueDate && qaFailed && totalBugs && openBugs && qaStoryPoints && subTaskCount;
             });
 
             if (!sortField) return filtered;
@@ -3385,6 +3393,11 @@
                 if (columnVisibility.assignee) cells.push(`<td>${ticket.assignee || ''}</td>`);
                 if (columnVisibility.priority) cells.push(`<td>${ticket.priority || ''}</td>`);
                 if (columnVisibility.storyPoints) cells.push(`<td>${typeof ticket.storyPoints === 'number' ? ticket.storyPoints : ''}</td>`);
+                if (columnVisibility.qaStoryPoints) {
+                    let qaSp = ticket.qaStoryPoints || ticket.customfield_10101;
+                    if (typeof qaSp !== 'number') qaSp = parseFloat(qaSp);
+                    cells.push(`<td>${!isNaN(qaSp) ? Math.round(qaSp * 10) / 10 : ''}</td>`);
+                }
                 if (columnVisibility.dueDate) {
                     const formattedDueDate = ticket.dueDate ? formatDueDate(ticket.dueDate) : '';
                     const isOverdue = formattedDueDate.startsWith('+ ');
@@ -6845,6 +6858,9 @@
                     }
                     if (col.id === 'storyPoints') {
                         return `<th><input type="text" placeholder="Search story points" oninput="setFilter('storyPoints', this.value, event)" onclick="event.stopPropagation();" value="${filters.storyPoints || ''}"></th>`;
+                    }
+                    if (col.id === 'qaStoryPoints') {
+                        return `<th class="qa-col"><input type="text" placeholder="Search QA SP" oninput="setFilter('qaStoryPoints', this.value, event)" onclick="event.stopPropagation();" value="${filters.qaStoryPoints || ''}"></th>`;
                     }
                     if (col.id === 'dueDate') {
                         return `<th><input type="text" placeholder="Search due date" oninput="setFilter('dueDate', this.value, event)" onclick="event.stopPropagation();" value="${filters.dueDate || ''}"></th>`;
