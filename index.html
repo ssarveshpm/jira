@@ -2672,6 +2672,70 @@
             }
         }
 
+        async function copyWidgetAsImage(widgetId, event) {
+            const widget = document.getElementById(widgetId);
+            if (!widget) {
+                alert('Widget not found');
+                return;
+            }
+
+            const button = event ? (event.target.closest('.snapshot-icon') || event.target) : widget.querySelector('.snapshot-icon');
+            const svg = button ? button.querySelector('svg') : null;
+            const originalSvg = svg ? svg.outerHTML : null;
+
+            try {
+                // Capture the widget as canvas
+                const canvas = await html2canvas(widget, {
+                    backgroundColor: '#ffffff',
+                    scale: 2, // Higher quality
+                    logging: false
+                });
+
+                // Convert canvas to blob
+                canvas.toBlob(async (blob) => {
+                    if (!blob) {
+                        alert('Failed to create image');
+                        return;
+                    }
+
+                    try {
+                        // Copy to clipboard
+                        await navigator.clipboard.write([
+                            new ClipboardItem({
+                                'image/png': blob
+                            })
+                        ]);
+
+                        // Visual feedback - show checkmark
+                        if (svg) {
+                            const checkmarkSvg = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="fill: #2e7d32;"><path d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"/></svg>';
+                            button.innerHTML = checkmarkSvg;
+                            setTimeout(() => {
+                                if (originalSvg) {
+                                    button.innerHTML = originalSvg;
+                                }
+                            }, 2000);
+                        }
+                    } catch (err) {
+                        console.error('Failed to copy to clipboard:', err);
+                        // Fallback: download the image
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `${widgetId}.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                        alert('Image copied! If clipboard didn\'t work, the image was downloaded instead.');
+                    }
+                }, 'image/png');
+            } catch (err) {
+                console.error('Failed to capture widget:', err);
+                alert('Failed to capture widget as image');
+            }
+        }
+
         function toggleFRView() {
             viewMode = 'fr';
             renderTickets(lastTickets);
@@ -4347,6 +4411,36 @@
                 })
                 .join('');
 
+            // Calculate AC Status for Pie Chart (aggregated by user-defined categories)
+            const acDataForPie = aggregateACData(tickets);
+            const totalACs = acDataForPie.length;
+            const acStatusCounts = {
+                'Backlog': 0, 'Dev': 0, 'QA': 0, 'BA': 0, 'Blocked': 0, 'Done': 0
+            };
+
+            acDataForPie.forEach(ac => {
+                const cat = getStatusCategory(ac.status);
+                if (acStatusCounts.hasOwnProperty(cat)) {
+                    acStatusCounts[cat]++;
+                } else {
+                    acStatusCounts['Backlog']++; // Defaulting to Backlog if not mapped
+                }
+            });
+
+            const acPieChartData = ['Backlog', 'Dev', 'QA', 'BA', 'Blocked', 'Done'].map(label => ({
+                label: label,
+                value: acStatusCounts[label]
+            }));
+
+            const acColorMap = {
+                'Backlog': '#9e9e9e',
+                'Dev': '#ff9800',
+                'QA': '#fbc02d',
+                'BA': '#7b1fa2',
+                'Blocked': '#d32f2f',
+                'Done': '#4caf50'
+            };
+
             container.innerHTML = `
                 <div class="filter-actions">
                     ${getFilterActionsButtons().tabs}
@@ -4498,6 +4592,25 @@
                         'Pending Bugs',
                         'PendingBugs'
                     ) : '<div class="empty-state" style="padding: 20px;">No data</div>')}
+                        </div>
+                    </div>
+                    <div class="dash-card" id="acStatusPieWidget">
+                        <div class="widget-header">
+                            <h3>AC Status</h3>
+                            <button class="snapshot-icon" onclick="copyWidgetAsImage('acStatusPieWidget', event)" title="Copy widget as image">
+                                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12A3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5a3.5 3.5 0 0 1-3.5 3.5m7.5-10.5h-1.5l-1-1h-4l-1 1H9.5l-1 1H5c-1.11 0-2 .89-2 2v10c0 1.11.89 2 2 2h14c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="dash-section" style="margin-bottom: 0;">
+                            ${totalACs > 0 ? generatePieChartSVG(
+                        acPieChartData,
+                        acColorMap,
+                        totalACs,
+                        'Total ACs',
+                        'ACStatus'
+                    ) : '<div class="empty-state" style="padding: 20px;">No ACs available</div>'}
                         </div>
                     </div>
                     <div class="dash-card wide" id="acReportWidget">
