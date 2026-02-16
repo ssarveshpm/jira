@@ -9,7 +9,7 @@
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%231c65e3' d='M64 64c0-17.7-14.3-32-32-32S0 46.3 0 64L0 400c0 44.2 35.8 80 80 80l400 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L80 416c-8.8 0-16-7.2-16-16L64 64zm406.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L320 210.7 262.6 153.4c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l73.4-73.4 57.4 57.4c12.5 12.5 32.8 12.5 45.3 0l128-128z'/%3E%3C/svg%3E">
     <script>
         // JIRA Apps Script URL - Update this when you deploy a new version
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzWW-2bhd-_AGvIl2p1167B6A4MECQDr755-ZMWj6U46eZQ0uIYeTLPsxgl3xdycffMPw/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxfib2Go0yDrPf-e4fpQmEbCFfp39hJqVcwE4jP1tDfFZKBvmmVCfBSAbcdoYIsMcK7Uw/exec';
         const JIRA_BASE_URL = 'https://cardyai-hawaii.atlassian.net/browse/';
         const APP_VERSION = '3.12.34';
     </script>
@@ -2813,8 +2813,20 @@
                 } else if (col.id === 'frStatus') {
                     value = item.frStatus || 'N/A';
                 }
+            } else if (viewType === 'ac') {
+                if (col.id === 'acId') {
+                    value = item.acId || '';
+                } else if (col.id === 'key') {
+                    value = item.key || 'N/A';
+                } else if (col.id === 'summary') {
+                    value = item.summary || 'No title';
+                } else if (col.id === 'status') {
+                    value = item.status || 'Unknown';
+                } else if (col.id === 'assignee') {
+                    value = item.assignee || '';
+                }
             } else {
-                // AC/Table view columns
+                // Table view columns
                 if (col.id === 'key') {
                     value = item.key || 'N/A';
                 } else if (col.id === 'summary') {
@@ -2866,13 +2878,13 @@
             let tabs = [];
             let options = [];
 
-            // Export button (available in table and FR views)
-            if (viewMode === 'table' || viewMode === 'fr') {
+            // Export button (available in table, FR, and AC views)
+            if (viewMode === 'table' || viewMode === 'fr' || viewMode === 'ac') {
                 options.push(`<button class="clear-btn" type="button" onclick="exportToCSV()" title="Export to CSV">Export</button>`);
             }
 
-            // Column chooser (available in table and FR views)
-            if (columnChooser && (viewMode === 'table' || viewMode === 'fr')) {
+            // Column chooser (available in table, FR, and AC views)
+            if (columnChooser && (viewMode === 'table' || viewMode === 'fr' || viewMode === 'ac')) {
                 options.push(columnChooser);
             }
 
@@ -2884,7 +2896,8 @@
                 { id: 'worklog', label: 'Worklog', onClick: "toggleView('worklog')" },
                 { id: 'sprintplan', label: 'Sprint Plan β', onClick: "toggleView('sprintplan')" },
                 { id: 'dev', label: 'Dev View', onClick: "toggleView('dev')" },
-                { id: 'qa', label: 'QA View', onClick: "toggleView('qa')" }
+                { id: 'qa', label: 'QA View', onClick: "toggleView('qa')" },
+                { id: 'ac', label: 'AC View', onClick: "toggleView('ac')" }
             ];
 
             viewConfigs.forEach(conf => {
@@ -2899,6 +2912,8 @@
                 options.push(`<button class="clear-btn" type="button" onclick="clearFRFilters()">Clear filters</button>`);
             } else if (viewMode === 'table') {
                 options.push(`<button class="clear-btn" type="button" onclick="clearFilters()">Clear filters</button>`);
+            } else if (viewMode === 'ac') {
+                options.push(`<button class="clear-btn" type="button" onclick="clearACFilters()">Clear filters</button>`);
             }
 
             return {
@@ -2921,6 +2936,12 @@
                 visibleColumns = frColumns.filter(c => frColumnVisibility[c.id]);
                 viewType = 'fr';
                 filenamePrefix = 'fr-view';
+            } else if (viewMode === 'ac') {
+                const acData = aggregateACData(lastTickets);
+                data = applyACFiltersAndSort(acData);
+                visibleColumns = acColumns.filter(c => acColumnVisibility[c.id]);
+                viewType = 'ac';
+                filenamePrefix = 'ac-view';
             } else {
                 // AC/Table view
                 data = applyFiltersAndSort(lastTickets);
@@ -5746,6 +5767,387 @@
             });
         }
 
+        // --- AC VIEW LOGIC ---
+
+        const acColumns = [
+            { id: 'serial', label: '#', sortable: null, className: 'serial-col' },
+            { id: 'acId', label: 'AC ID', sortable: 'acId' },
+            { id: 'key', label: 'Key', sortable: 'key' },
+            { id: 'summary', label: 'Summary', sortable: 'summary' },
+            { id: 'status', label: 'Status', sortable: 'status' },
+            { id: 'assignee', label: 'Assignee', sortable: 'assignee' }
+        ];
+
+        const acColumnVisibility = {
+            serial: true,
+            acId: true,
+            key: true,
+            summary: true,
+            status: true,
+            assignee: true
+        };
+
+        const acFilters = {
+            acId: '',
+            key: '',
+            summary: '',
+            statusValues: [],
+            assigneeValues: []
+        };
+
+        let acSortField = null;
+        let acSortDir = 'asc';
+
+        function aggregateACData(tickets) {
+            const acRows = [];
+
+            tickets.forEach(ticket => {
+                const acIds = ticket.acIds || [];
+                if (acIds.length === 0) return;
+
+                acIds.forEach(id => {
+                    acRows.push({
+                        acId: id,
+                        key: ticket.key,
+                        summary: ticket.summary,
+                        status: ticket.status || 'Unknown',
+                        assignee: ticket.assignee || 'Unassigned',
+                        url: ticket.url
+                    });
+                });
+            });
+
+            return acRows;
+        }
+
+        function applyACFiltersAndSort(acData) {
+            let filtered = acData.filter(row => {
+                const acId = (row.acId || '').toLowerCase().includes(acFilters.acId.toLowerCase());
+                const key = (row.key || '').toLowerCase().includes(acFilters.key.toLowerCase());
+                const summary = (row.summary || '').toLowerCase().includes(acFilters.summary.toLowerCase());
+
+                const statusValue = (row.status || '').toLowerCase();
+                const status = acFilters.statusValues.length === 0 || acFilters.statusValues.includes(statusValue);
+
+                const assigneeValue = (row.assignee || '').toLowerCase();
+                const assignee = acFilters.assigneeValues.length === 0 || acFilters.assigneeValues.includes(assigneeValue);
+
+                return acId && key && summary && status && assignee;
+            });
+
+            if (!acSortField) return filtered;
+
+            const dir = acSortDir === 'asc' ? 1 : -1;
+            return filtered.toSorted((a, b) => {
+                const va = (a[acSortField] ?? '').toString().toLowerCase();
+                const vb = (b[acSortField] ?? '').toString().toLowerCase();
+                if (va < vb) return -1 * dir;
+                if (va > vb) return 1 * dir;
+                return 0;
+            });
+        }
+
+        function toggleACMultiOption(field, value, checked, evt) {
+            if (evt) evt.stopPropagation();
+            const key = `${field}Values`;
+            const arr = acFilters[key] || [];
+            const norm = value.toLowerCase();
+            const exists = arr.includes(norm);
+            if (checked && !exists) {
+                arr.push(norm);
+                acFilters[key] = arr;
+            } else if (!checked && exists) {
+                acFilters[key] = arr.filter(v => v !== norm);
+            }
+            const tbody = document.getElementById('acTableBody');
+            if (tbody) {
+                // Determine the correct data source (lastTickets logic)
+                const acData = aggregateACData(lastTickets);
+                tbody.innerHTML = updateACTableBodySource(acData);
+
+                // Update button label
+                const btn = document.getElementById(`dropdown-btn-ac-${field}`);
+                if (btn) {
+                    const vals = acFilters[key];
+                    const label = vals.length === 0 ? 'All' : (vals.length === 1 ? vals[0] : `${vals.length} selected`);
+                    btn.innerHTML = `${label} <span class="caret">▾</span>`;
+                }
+            } else {
+                renderACView(lastTickets);
+            }
+        }
+
+        function clearACMultiFilter(field, evt) {
+            if (evt) evt.stopPropagation();
+            acFilters[`${field}Values`] = [];
+            const tbody = document.getElementById('acTableBody');
+            if (tbody) {
+                const acData = aggregateACData(lastTickets);
+                tbody.innerHTML = updateACTableBodySource(acData);
+
+                const btn = document.getElementById(`dropdown-btn-ac-${field}`);
+                if (btn) {
+                    btn.innerHTML = `All <span class="caret">▾</span>`;
+                }
+                const container = document.getElementById(`dropdown-ac-${field}`);
+                if (container) {
+                    container.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                }
+            } else {
+                renderACView(lastTickets);
+            }
+        }
+
+        function setACFilter(field, value, evt) {
+            if (evt) evt.stopPropagation();
+            acFilters[field] = value;
+            const tbody = document.getElementById('acTableBody');
+            if (tbody) {
+                const acData = aggregateACData(lastTickets);
+                tbody.innerHTML = updateACTableBodySource(acData);
+            } else {
+                renderACView(lastTickets);
+            }
+        }
+
+        function setACSort(field) {
+            if (acSortField === field) {
+                acSortDir = acSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                acSortField = field;
+                acSortDir = 'asc';
+            }
+            renderACView(lastTickets);
+        }
+
+        function acSortIndicator(field) {
+            if (acSortField !== field) return '⇅';
+            return acSortDir === 'asc' ? '▲' : '▼';
+        }
+
+        function toggleACColumnVisibility(colId, checked, evt) {
+            if (evt) evt.stopPropagation();
+            acColumnVisibility[colId] = checked;
+            renderACView(lastTickets);
+        }
+
+        function resetACColumns(evt) {
+            if (evt) evt.stopPropagation();
+            Object.keys(acColumnVisibility).forEach(k => acColumnVisibility[k] = true);
+            renderACView(lastTickets);
+        }
+
+        function acColumnsDropdownLabel() {
+            const visibleCount = Object.values(acColumnVisibility).filter(Boolean).length;
+            const total = acColumns.length;
+            return visibleCount === total ? 'Columns (All)' : `Columns (${visibleCount}/${total})`;
+        }
+
+        function acDropdownLabel(field) {
+            const arr = acFilters[`${field}Values`] || [];
+            if (arr.length === 0) return 'All';
+            if (arr.length === 1) return arr[0];
+            return `${arr.length} selected`;
+        }
+
+        function exportACToCSV() {
+            const acData = aggregateACData(lastTickets);
+            const visible = applyACFiltersAndSort(acData);
+            const visibleCols = acColumns.filter(c => acColumnVisibility[c.id]);
+
+            let csv = visibleCols.map(c => `"${c.label}"`).join(',') + '\n';
+
+            visible.forEach((row, idx) => {
+                const csvRow = visibleCols.map(col => {
+                    let value = '';
+                    if (col.id === 'serial') value = idx + 1;
+                    else value = row[col.id] || '';
+                    return `"${String(value).replace(/"/g, '""')}"`;
+                }).join(',');
+                csv += csvRow + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', 'ac_view.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Helper to update only tbody content for AC filters
+        function updateACTableBodySource(acData) {
+            const filteredAndSorted = applyACFiltersAndSort(acData);
+
+            return filteredAndSorted.map((row, idx) => {
+                const cells = [];
+                if (acColumnVisibility.serial) cells.push(`<td class="serial-col">${idx + 1}</td>`);
+                if (acColumnVisibility.acId) cells.push(`<td>${row.acId}</td>`);
+                if (acColumnVisibility.key) cells.push(`<td>${row.key}</td>`);
+                if (acColumnVisibility.summary) cells.push(`<td>${row.summary}</td>`);
+                if (acColumnVisibility.status) cells.push(`<td><span class="ticket-status">${row.status}</span></td>`);
+                if (acColumnVisibility.assignee) cells.push(`<td>${row.assignee}</td>`);
+
+                return `<tr onclick="window.open('${row.url || '#'}', '_blank')" style="cursor:pointer;">${cells.join('')}</tr>`;
+            }).join('');
+        }
+
+        function renderACView(tickets) {
+            const container = document.getElementById('ticketsContainer');
+            if (!tickets || tickets.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h2>No tickets found</h2>
+                        <p>No Jira tickets were returned from the API</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const acData = aggregateACData(tickets);
+            if (acData.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h2>No AC data found</h2>
+                        <p>No tickets have AC IDs assigned</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Prepare options for multi-selects
+            const statusOptions = Array.from(new Set(acData.map(r => r.status))).sort();
+            const assigneeOptions = Array.from(new Set(acData.map(r => r.assignee))).sort();
+
+            const optionHtml = (opts, selected, field) => opts.map(opt => {
+                const isSel = selected.includes(opt.toLowerCase());
+                const safe = opt.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                return `
+                    <label>
+                        <input type="checkbox" ${isSel ? 'checked' : ''} onchange="toggleACMultiOption('${field}', '${safe}', this.checked, event)">
+                        ${safe}
+                    </label>
+                `;
+            }).join('');
+
+            const visibleColumns = acColumns.filter(c => acColumnVisibility[c.id]);
+
+            const headerCells = visibleColumns.map(col => {
+                const sortableAttrs = col.sortable
+                    ? `class="sortable ${col.className || ''} ${acSortField === col.id ? 'sorted' : ''}" onclick="setACSort('${col.id}')"`
+                    : `${col.className ? `class="${col.className}"` : ''}`;
+                const indicator = col.sortable ? `<span class="sort-indicator">${acSortIndicator(col.id)}</span>` : '';
+                return `
+                    <th ${sortableAttrs}>
+                        ${col.label} ${indicator}
+                    </th>
+                `;
+            }).join('');
+
+            const filterRow = `
+                <tr>
+                    ${visibleColumns.map(col => {
+                if (col.id === 'serial') return `<th class="serial-col">#</th>`;
+                if (col.id === 'acId') return `<th><input type="text" placeholder="Search AC ID" oninput="setACFilter('acId', this.value, event)" onclick="event.stopPropagation();" value="${acFilters.acId || ''}"></th>`;
+                if (col.id === 'key') return `<th><input type="text" placeholder="Search Key" oninput="setACFilter('key', this.value, event)" onclick="event.stopPropagation();" value="${acFilters.key || ''}"></th>`;
+                if (col.id === 'summary') return `<th><input type="text" placeholder="Search Summary" oninput="setACFilter('summary', this.value, event)" onclick="event.stopPropagation();" value="${acFilters.summary || ''}"></th>`;
+                if (col.id === 'status') {
+                    return `
+                                <th>
+                                    <div class="multi-dd" onclick="event.stopPropagation();">
+                                        <button class="multi-dd-btn" id="dropdown-btn-ac-status" type="button" onclick="toggleDropdown('ac-status', event)">
+                                            ${acDropdownLabel('status')} <span class="caret">▾</span>
+                                        </button>
+                                        <div class="multi-dd-options" id="dropdown-ac-status">
+                                            ${optionHtml(statusOptions, acFilters.statusValues, 'status')}
+                                            <button class="dd-clear" type="button" onclick="clearACMultiFilter('status', event)">Clear</button>
+                                        </div>
+                                    </div>
+                                </th>
+                            `;
+                }
+                if (col.id === 'assignee') {
+                    return `
+                                <th>
+                                    <div class="multi-dd" onclick="event.stopPropagation();">
+                                        <button class="multi-dd-btn" id="dropdown-btn-ac-assignee" type="button" onclick="toggleDropdown('ac-assignee', event)">
+                                            ${acDropdownLabel('assignee')} <span class="caret">▾</span>
+                                        </button>
+                                        <div class="multi-dd-options" id="dropdown-ac-assignee">
+                                            ${optionHtml(assigneeOptions, acFilters.assigneeValues, 'assignee')}
+                                            <button class="dd-clear" type="button" onclick="clearACMultiFilter('assignee', event)">Clear</button>
+                                        </div>
+                                    </div>
+                                </th>
+                            `;
+                }
+                return '<th></th>';
+            }).join('')}
+                </tr>
+            `;
+
+            const columnChooser = `
+                <div class="multi-dd" onclick="event.stopPropagation();">
+                    <button class="multi-dd-btn" id="dropdown-btn-acColumns" type="button" onclick="toggleDropdown('acColumns', event)">
+                        ${acColumnsDropdownLabel()} <span class="caret">▾</span>
+                    </button>
+                    <div class="multi-dd-options" id="dropdown-acColumns">
+                        ${acColumns.map(col => `
+                            <label>
+                                <input type="checkbox" ${acColumnVisibility[col.id] ? 'checked' : ''} onchange="toggleACColumnVisibility('${col.id}', this.checked, event)">
+                                ${col.label}
+                            </label>
+                        `).join('')}
+                        <button class="dd-clear" type="button" onclick="resetACColumns(event)">Show all</button>
+                    </div>
+                </div>
+            `;
+
+            // NOTE: We need to update getFilterActionsButtons to support AC View
+            // For now, attempting to use it but we'll need to patch it.
+            // If getFilterActionsButtons is not defined yet, this might error if called.
+            // But we will patch it next.
+            const viewActions = getFilterActionsButtons(columnChooser);
+
+            // Create specific AC View actions if getFilterActionsButtons doesn't support 'ac' mode well yet
+            // But we will fix getFilterActionsButtons.
+
+            container.innerHTML = `
+                <div class="filter-actions" style="border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                    ${viewActions.tabs}
+                </div>
+                <div class="filter-actions">
+                    <button class="clear-btn" onclick="exportACToCSV()">Export</button>
+                    ${viewActions.options}
+                </div>
+                <table class="tickets-table">
+                    <thead>
+                        <tr>
+                            ${headerCells}
+                        </tr>
+                        ${filterRow}
+                    </thead>
+                    <tbody id="acTableBody">
+                        ${updateACTableBodySource(acData)}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // --- Restored Missing Functions ---
+
+        function clearACFilters() {
+            Object.assign(acFilters, {
+                acId: '',
+                key: '',
+                summary: '',
+                statusValues: [],
+                assigneeValues: []
+            });
+            renderACView(lastTickets);
+        }
+
         function renderFRView(tickets) {
             const container = document.getElementById('ticketsContainer');
             if (!tickets || tickets.length === 0) {
@@ -5759,7 +6161,6 @@
             }
 
             const frData = aggregateFRData(tickets);
-
             if (frData.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
@@ -5770,7 +6171,7 @@
                 return;
             }
 
-            // Get unique status values for filter
+            // Status options for FR view
             const statusOptions = ['Done', 'Pending', 'Partially Done'];
 
             const optionHtml = (opts, selected, field) => opts.map(opt => {
@@ -5801,21 +6202,11 @@
             const filterRow = `
                 <tr>
                     ${visibleColumns.map(col => {
-                if (col.id === 'serial') {
-                    return `<th class="serial-col">#</th>`;
-                }
-                if (col.id === 'frId') {
-                    return `<th><input type="text" placeholder="Search FR ID" oninput="setFRFilter('frId', this.value, event)" onclick="event.stopPropagation();" value="${frFilters.frId || ''}"></th>`;
-                }
-                if (col.id === 'totalTickets') {
-                    return `<th><input type="text" placeholder="Search total" oninput="setFRFilter('totalTickets', this.value, event)" onclick="event.stopPropagation();" value="${frFilters.totalTickets || ''}"></th>`;
-                }
-                if (col.id === 'doneTickets') {
-                    return `<th><input type="text" placeholder="Search done" oninput="setFRFilter('doneTickets', this.value, event)" onclick="event.stopPropagation();" value="${frFilters.doneTickets || ''}"></th>`;
-                }
-                if (col.id === 'pendingTickets') {
-                    return `<th><input type="text" placeholder="Search pending" oninput="setFRFilter('pendingTickets', this.value, event)" onclick="event.stopPropagation();" value="${frFilters.pendingTickets || ''}"></th>`;
-                }
+                if (col.id === 'serial') return '<th class="serial-col">#</th>';
+                if (col.id === 'frId') return `<th><input type="text" placeholder="Search FR ID" oninput="setFRFilter('frId', this.value, event)" onclick="event.stopPropagation();" value="${frFilters.frId || ''}"></th>`;
+                if (col.id === 'totalTickets') return `<th><input type="text" placeholder="Search total" oninput="setFRFilter('totalTickets', this.value, event)" onclick="event.stopPropagation();" value="${frFilters.totalTickets || ''}"></th>`;
+                if (col.id === 'doneTickets') return `<th><input type="text" placeholder="Search done" oninput="setFRFilter('doneTickets', this.value, event)" onclick="event.stopPropagation();" value="${frFilters.doneTickets || ''}"></th>`;
+                if (col.id === 'pendingTickets') return `<th><input type="text" placeholder="Search pending" oninput="setFRFilter('pendingTickets', this.value, event)" onclick="event.stopPropagation();" value="${frFilters.pendingTickets || ''}"></th>`;
                 if (col.id === 'frStatus') {
                     return `
                                 <th>
@@ -5854,8 +6245,8 @@
             `;
 
             const filteredAndSorted = applyFRFiltersAndSort(frData);
-
             const viewActions = getFilterActionsButtons(columnChooser);
+
             container.innerHTML = `
                 <div class="filter-actions" style="border-bottom: 1px solid #eee; padding-bottom: 15px;">
                     ${viewActions.tabs}
@@ -5879,15 +6270,17 @@
                 if (frColumnVisibility.doneTickets) cells.push(`<td>${fr.doneTickets || 0}</td>`);
                 if (frColumnVisibility.pendingTickets) cells.push(`<td>${fr.pendingTickets || 0}</td>`);
                 if (frColumnVisibility.frStatus) cells.push(`<td>${fr.frStatus || 'N/A'}</td>`);
-                // Construct Jira URL with FR ID - only make clickable if FR ID exists
+
                 const frId = fr.frId || '';
                 let rowAttrs = '';
                 if (frId && frId !== 'N/A') {
-                    const parent = modules[activeModule].emId;
-                    const jqlQuery = `cf[10049] = "${frId}" AND parent = ${parent}`;
-                    const encodedJql = encodeURIComponent(jqlQuery);
-                    const jiraUrl = `https://cardyai-hawaii.atlassian.net/issues/?jql=${encodedJql}`;
-                    rowAttrs = `onclick="window.open('${jiraUrl}', '_blank')" style="cursor:pointer;"`;
+                    const parent = modules[activeModule] ? modules[activeModule].emId : '';
+                    if (parent) {
+                        const jqlQuery = `cf[10049] = "${frId}" AND parent = ${parent}`;
+                        const encodedJql = encodeURIComponent(jqlQuery);
+                        const jiraUrl = `https://cardyai-hawaii.atlassian.net/issues/?jql=${encodedJql}`;
+                        rowAttrs = `onclick="window.open('${jiraUrl}', '_blank')" style="cursor:pointer;"`;
+                    }
                 }
                 return `<tr ${rowAttrs}>${cells.join('')}</tr>`;
             }).join('')}
@@ -5895,6 +6288,11 @@
                 </table>
             `;
         }
+
+
+
+
+
 
         // --- QA VIEW LOGIC ---
 
@@ -6759,6 +7157,11 @@
 
             if (viewMode === 'fr') {
                 renderFRView(tickets);
+                return;
+            }
+
+            if (viewMode === 'ac') {
+                renderACView(tickets);
                 return;
             }
 
