@@ -1377,6 +1377,31 @@
 
         // Module configuration - Add new modules here by providing module ID, display name, and EM ID
         const modules = {
+			title3: {
+                name: 'Sprint 7 - Title IV-E',
+                emId: 'EM-8078',
+                sprintId: '1535'
+            },
+			pos2: {
+                name: 'Sprint 7 - Finance POS',
+                emId: 'EM-9036',
+                sprintId: '1535'
+            },
+			case3: {
+                name: 'Sprint 7 - Case Management',
+                emId: 'EM-1912',
+                sprintId: '1535'
+            },
+			external1: {
+                name: 'Sprint 7 - External Portal',
+                emId: 'EM-9877',
+                sprintId: '1535'
+            },
+			program1: {
+                name: 'Sprint 7 - Program Management',
+                emId: 'EM-9878',
+                sprintId: '1535'
+            },
             title2: {
                 name: 'Sprint 6 - Title IV-E',
                 emId: 'EM-8078',
@@ -1439,7 +1464,7 @@
             // }
         };
 
-        let activeModule = 'title2'; // Default module
+        let activeModule = 'title3'; // Default module
         let viewMode = 'dashboard'; // 'table' | 'dashboard' | 'fr' | 'worklog' | 'sprintplan' | 'dev'
         let lastTickets = [];
         let frDataCache = [];
