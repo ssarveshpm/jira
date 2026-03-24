@@ -9,7 +9,7 @@
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%231c65e3' d='M64 64c0-17.7-14.3-32-32-32S0 46.3 0 64L0 400c0 44.2 35.8 80 80 80l400 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L80 416c-8.8 0-16-7.2-16-16L64 64zm406.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L320 210.7 262.6 153.4c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l73.4-73.4 57.4 57.4c12.5 12.5 32.8 12.5 45.3 0l128-128z'/%3E%3C/svg%3E">
     <script>
         // JIRA Apps Script URL - Update this when you deploy a new version
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxfib2Go0yDrPf-e4fpQmEbCFfp39hJqVcwE4jP1tDfFZKBvmmVCfBSAbcdoYIsMcK7Uw/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzoXF_hEBI6otxQRpWsEH40d6lDFRNn2Nm-bQyDuYttWhK_tmCuw0o-mJ0xUfWDrn6YVg/exec';
         const JIRA_BASE_URL = 'https://cardyai-hawaii.atlassian.net/browse/';
         const APP_VERSION = '3.12.34';
     </script>
@@ -1377,27 +1377,27 @@
 
         // Module configuration - Add new modules here by providing module ID, display name, and EM ID
         const modules = {
-			title3: {
+            title3: {
                 name: 'Sprint 7 - Title IV-E',
                 emId: 'EM-8078',
                 sprintId: '1535'
             },
-			pos2: {
+            pos2: {
                 name: 'Sprint 7 - Finance POS',
                 emId: 'EM-9036',
                 sprintId: '1535'
             },
-			case3: {
+            case3: {
                 name: 'Sprint 7 - Case Management',
                 emId: 'EM-1912',
                 sprintId: '1535'
             },
-			external1: {
+            external1: {
                 name: 'Sprint 7 - External Portal',
                 emId: 'EM-9877',
                 sprintId: '1535'
             },
-			program1: {
+            program1: {
                 name: 'Sprint 7 - Program Management',
                 emId: 'EM-9878',
                 sprintId: '1535'
@@ -4005,13 +4005,11 @@
             let totalSubTaskSP = 0;
             subTasksExcludingQA.forEach(t => {
                 const assignee = (t.assignee || 'Unassigned').trim();
-                // Ensure storyPoints is treated as a number
-                // Check various possible locations/names for Story Points
                 let item = t;
-                // If backend returns raw fields in a property (unlikely based on assignee, but possible)
                 if (t.fields) item = t.fields;
 
-                let sp = item.storyPoints || item.customfield_10048 || item.customfield_10026 || item.customfield_10016 || item.customfield_10034;
+                // storyPoints is already safely resolved as a number-only value by the backend
+                let sp = item.storyPoints;
 
                 if (typeof sp !== 'number') {
                     sp = parseFloat(sp);
@@ -4083,7 +4081,7 @@
                 // Get Story Points for this subtask
                 let item = t;
                 if (t.fields) item = t.fields;
-                let sp = item.storyPoints || item.customfield_10048 || item.customfield_10026 || item.customfield_10016 || item.customfield_10034;
+                let sp = item.storyPoints;
                 if (typeof sp !== 'number') sp = parseFloat(sp);
                 if (isNaN(sp)) sp = 0;
 
