@@ -9,7 +9,7 @@
         href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='%231c65e3' d='M64 64c0-17.7-14.3-32-32-32S0 46.3 0 64L0 400c0 44.2 35.8 80 80 80l400 0c17.7 0 32-14.3 32-32s-14.3-32-32-32L80 416c-8.8 0-16-7.2-16-16L64 64zm406.6 86.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L320 210.7 262.6 153.4c-12.5-12.5-32.8-12.5-45.3 0l-96 96c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l73.4-73.4 57.4 57.4c12.5 12.5 32.8 12.5 45.3 0l128-128z'/%3E%3C/svg%3E">
     <script>
         // JIRA Apps Script URL - Update this when you deploy a new version
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzoXF_hEBI6otxQRpWsEH40d6lDFRNn2Nm-bQyDuYttWhK_tmCuw0o-mJ0xUfWDrn6YVg/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwSXSoazVP1NUfsT92FoCOrk88As8-EsVdNRJR6mujw9GCsf0bVuvJQQnPuUjgru5rAOQ/exec';
         const JIRA_BASE_URL = 'https://cardyai-hawaii.atlassian.net/browse/';
         const APP_VERSION = '3.12.34';
     </script>
@@ -1377,30 +1377,40 @@
 
         // Module configuration - Add new modules here by providing module ID, display name, and EM ID
         const modules = {
-			title4: {
+            hifull8: {
+                name: 'Sprint 8',
+                emId: '',
+                sprintId: '1569'
+            },
+            title4: {
                 name: 'Sprint 8 - Title IV-E',
                 emId: 'EM-8078',
                 sprintId: '1569'
             },
-			pos3: {
+            pos3: {
                 name: 'Sprint 8 - Finance POS',
                 emId: 'EM-9036',
                 sprintId: '1569'
             },
-			case4: {
+            case4: {
                 name: 'Sprint 8 - Case Management',
                 emId: 'EM-1912',
                 sprintId: '1569'
             },
-			external2: {
+            external2: {
                 name: 'Sprint 8 - External Portal',
                 emId: 'EM-9877',
                 sprintId: '1569'
             },
-			program2: {
+            program2: {
                 name: 'Sprint 8 - Program Management',
                 emId: 'EM-9878',
                 sprintId: '1569'
+            },
+            hifull7: {
+                name: 'Sprint 7',
+                emId: '',
+                sprintId: '1535'
             },
             title3: {
                 name: 'Sprint 7 - Title IV-E',
@@ -1426,6 +1436,11 @@
                 name: 'Sprint 7 - Program Management',
                 emId: 'EM-9878',
                 sprintId: '1535'
+            },
+            hifull6: {
+                name: 'Sprint 6',
+                emId: '',
+                sprintId: '1502'
             },
             title2: {
                 name: 'Sprint 6 - Title IV-E',
@@ -1457,11 +1472,6 @@
                 emId: 'EM-1912',
                 sprintId: '1264'
             },
-            testmodule: {
-                name: 'Testmodule',
-                emId: 'EM-5860',
-                sprintId: ''
-            },
             licensing: {
                 name: 'Sprint 4 - Licensing',
                 emId: 'EM-896',
@@ -1482,14 +1492,20 @@
                 emId: 'EM-1460',
                 sprintId: '923'
             },
+            testmodule: {
+                name: 'Testmodule',
+                emId: 'EM-5860',
+                sprintId: ''
+            },
             // To add a new module, uncomment and modify:
             // newModule: {
             //     name: 'New Module',
             //     emId: 'EM-XXXX'
+            //     sprintId: 'XXXX'
             // }
         };
 
-        let activeModule = 'title4'; // Default module
+        let activeModule = 'hifull8'; // Default module
         let viewMode = 'dashboard'; // 'table' | 'dashboard' | 'fr' | 'worklog' | 'sprintplan' | 'dev'
         let lastTickets = [];
         let frDataCache = [];
@@ -1563,6 +1579,36 @@
             linkedToDisplay: true
         };
 
+        // --- BUGS VIEW STATE ---
+        let bugsSortField = null;
+        let bugsSortDir = 'asc';
+        const bugsFilters = {
+            key: '',
+            summary: '',
+            statusValues: [],
+            assigneeValues: [],
+            priorityValues: [],
+            linkedToDisplay: ''
+        };
+        const bugsColumns = [
+            { id: 'serial', label: '#', sortable: false, className: 'serial-col' },
+            { id: 'key', label: 'Key', sortable: true },
+            { id: 'summary', label: 'Summary', sortable: true },
+            { id: 'status', label: 'Status', sortable: true },
+            { id: 'assignee', label: 'Assignee', sortable: true },
+            { id: 'priority', label: 'Priority', sortable: true },
+            { id: 'linkedToDisplay', label: 'Linked Tickets', sortable: true }
+        ];
+        const bugsColumnVisibility = {
+            serial: true,
+            key: true,
+            summary: false,
+            status: true,
+            assignee: true,
+            priority: true,
+            linkedToDisplay: true
+        };
+
         // Initialize module dropdown on page load
         function initializeModuleDropdown() {
             const moduleSelect = document.getElementById('moduleSelect');
@@ -1599,6 +1645,7 @@
         const columns = [
             { id: 'serial', label: '#', sortable: null, className: 'serial-col' },
             { id: 'key', label: 'Key', sortable: 'key' },
+            { id: 'parentKey', label: 'Parent ID', sortable: 'parentKey' },
             { id: 'summary', label: 'Summary', sortable: 'summary' },
             { id: 'status', label: 'Status', sortable: 'status' },
             { id: 'assignee', label: 'Assignee', sortable: 'assignee' },
@@ -1613,6 +1660,7 @@
             { id: 'updated', label: 'Updated', sortable: 'updated' },
             { id: 'qaFailedCount', label: 'QA Loop', sortable: 'qaFailedCount', className: 'qa-col' },
             { id: 'totalBugs', label: 'Total Bugs', sortable: 'totalBugs', className: 'qa-col' },
+            { id: 'linkedBugs', label: 'Linked Bugs', sortable: 'linkedBugs' },
             { id: 'openBugs', label: 'Open Bugs', sortable: 'openBugs', className: 'qa-col' },
             { id: 'subTaskCount', label: 'Sub Tasks', sortable: 'subTaskCount', className: 'qa-col' },
         ];
@@ -1635,6 +1683,7 @@
             return {
                 serial: true,
                 key: true,
+                parentKey: false,
                 summary: false,
                 status: true,
                 assignee: true,
@@ -1650,7 +1699,8 @@
                 qaFailedCount: true,
                 totalBugs: false,
                 openBugs: true,
-                subTaskCount: false
+                subTaskCount: false,
+                linkedBugs: false
             };
         }
 
@@ -1660,6 +1710,7 @@
         function getDefaultFilters() {
             return {
                 key: '',
+                parentKeyValues: [],
                 summary: '',
                 statusValues: [],
                 assigneeValues: [],
@@ -1675,7 +1726,8 @@
                 totalBugs: '',
                 openBugs: '',
                 qaStoryPoints: '',
-                subTaskCount: ''
+                subTaskCount: '',
+                linkedBugs: ''
             };
         }
 
@@ -1907,6 +1959,7 @@
                     const statusOptions = getUniqueValues(tickets, 'status');
                     const assigneeOptions = getUniqueValues(tickets, 'assignee');
                     const priorityOptions = getUniqueValues(tickets, 'priority');
+                    const parentKeyOptions = getUniqueValues(tickets, 'parentKey');
 
                     const optionHtml = (opts, selected, field) => opts.map(opt => {
                         const isSel = selected.includes(opt.toLowerCase());
@@ -1925,6 +1978,21 @@
                         }
                         if (col.id === 'key') {
                             return `<th><input type="text" placeholder="Search key" oninput="setFilter('key', this.value, event)" onclick="event.stopPropagation();" value="${filters.key || ''}"></th>`;
+                        }
+                        if (col.id === 'parentKey') {
+                            return `
+                                        <th>
+                                            <div class="multi-dd" onclick="event.stopPropagation();">
+                                                <button class="multi-dd-btn" id="dropdown-btn-parentKey" type="button" onclick="toggleDropdown('parentKey', event)">
+                                                    ${dropdownLabel('parentKey')} <span class="caret">▾</span>
+                                                </button>
+                                                <div class="multi-dd-options" id="dropdown-parentKey">
+                                                    ${optionHtml(parentKeyOptions, filters.parentKeyValues, 'parentKey')}
+                                                    <button class="dd-clear" type="button" onclick="clearMultiFilter('parentKey', event)">Clear</button>
+                                                </div>
+                                            </div>
+                                        </th>
+                                    `;
                         }
                         if (col.id === 'summary') {
                             return `<th><input type="text" placeholder="Search summary" oninput="setFilter('summary', this.value, event)" onclick="event.stopPropagation();" value="${filters.summary || ''}"></th>`;
@@ -2006,6 +2074,9 @@
                         }
                         if (col.id === 'subTaskCount') {
                             return `<th class="qa-col"><input type="text" placeholder="Search sub tasks" oninput="setFilter('subTaskCount', this.value, event)" onclick="event.stopPropagation();" value="${filters.subTaskCount || ''}"></th>`;
+                        }
+                        if (col.id === 'linkedBugs') {
+                            return `<th><input type="text" placeholder="Search linked bugs" oninput="setFilter('linkedBugs', this.value, event)" onclick="event.stopPropagation();" value="${filters.linkedBugs || ''}"></th>`;
                         }
                         return '<th></th>';
                     }).join('');
@@ -2939,10 +3010,24 @@
                 } else if (col.id === 'assignee') {
                     value = item.assignee || '';
                 }
+            } else if (viewType === 'bugs') {
+                if (col.id === 'key') {
+                    value = item.key || 'N/A';
+                } else if (col.id === 'summary') {
+                    value = item.summary || 'No title';
+                } else if (col.id === 'status') {
+                    value = item.status || 'Unknown';
+                } else if (col.id === 'assignee') {
+                    value = item.assignee || '';
+                } else if (col.id === 'linkedToDisplay') {
+                    value = item.linkedToDisplay || '';
+                }
             } else {
                 // Table view columns
                 if (col.id === 'key') {
                     value = item.key || 'N/A';
+                } else if (col.id === 'parentKey') {
+                    value = item.parentKey || '';
                 } else if (col.id === 'summary') {
                     value = item.summary || item.title || 'No title';
                 } else if (col.id === 'status') {
@@ -2982,6 +3067,8 @@
                     value = typeof item.openBugs === 'number' ? item.openBugs : '';
                 } else if (col.id === 'subTaskCount') {
                     value = typeof item.subTaskCount === 'number' ? item.subTaskCount : 0;
+                } else if (col.id === 'linkedBugs') {
+                    value = (item.linkedBugs || []).map(b => b.key).join(', ');
                 }
             }
             return value;
@@ -2992,13 +3079,13 @@
             let tabs = [];
             let options = [];
 
-            // Export button (available in table, FR, and AC views)
-            if (viewMode === 'table' || viewMode === 'fr' || viewMode === 'ac') {
+            // Export button (available in table, FR, AC, and bugs views)
+            if (viewMode === 'table' || viewMode === 'fr' || viewMode === 'ac' || viewMode === 'bugs') {
                 options.push(`<button class="clear-btn" type="button" onclick="exportToCSV()" title="Export to CSV">Export</button>`);
             }
 
-            // Column chooser (available in table, FR, and AC views)
-            if (columnChooser && (viewMode === 'table' || viewMode === 'fr' || viewMode === 'ac')) {
+            // Column chooser (available in table, FR, AC, and bugs views)
+            if (columnChooser && (viewMode === 'table' || viewMode === 'fr' || viewMode === 'ac' || viewMode === 'bugs')) {
                 options.push(columnChooser);
             }
 
@@ -3007,6 +3094,7 @@
                 { id: 'dashboard', label: 'Dashboard', onClick: "toggleView('dashboard')" },
                 { id: 'table', label: 'Story View', onClick: "toggleView('table')" },
                 { id: 'fr', label: 'FR View', onClick: "toggleView('fr')" },
+                { id: 'bugs', label: 'Bugs', onClick: "toggleView('bugs')" },
                 { id: 'worklog', label: 'Worklog', onClick: "toggleView('worklog')" },
                 { id: 'sprintplan', label: 'Sprint Plan β', onClick: "toggleView('sprintplan')" },
                 { id: 'dev', label: 'Dev View', onClick: "toggleView('dev')" },
@@ -3028,6 +3116,8 @@
                 options.push(`<button class="clear-btn" type="button" onclick="clearFilters()">Clear filters</button>`);
             } else if (viewMode === 'ac') {
                 options.push(`<button class="clear-btn" type="button" onclick="clearACFilters()">Clear filters</button>`);
+            } else if (viewMode === 'bugs') {
+                options.push(`<button class="clear-btn" type="button" onclick="clearBugsFilters()">Clear filters</button>`);
             }
 
             return {
@@ -3056,6 +3146,11 @@
                 visibleColumns = acColumns.filter(c => acColumnVisibility[c.id]);
                 viewType = 'ac';
                 filenamePrefix = 'ac-view';
+            } else if (viewMode === 'bugs') {
+                data = applyBugsFiltersAndSort();
+                visibleColumns = bugsColumns.filter(c => bugsColumnVisibility[c.id]);
+                viewType = 'bugs';
+                filenamePrefix = 'bugs-view';
             } else {
                 // AC/Table view
                 data = applyFiltersAndSort(lastTickets);
@@ -3463,6 +3558,8 @@
         function applyFiltersAndSort(tickets) {
             const filtered = tickets.filter(t => {
                 const key = (t.key || '').toLowerCase().includes(filters.key);
+                const parentKeyValue = (t.parentKey || '').toLowerCase();
+                const parentKey = filters.parentKeyValues.length === 0 || filters.parentKeyValues.includes(parentKeyValue);
                 const summary = (t.summary || t.title || '').toLowerCase().includes(filters.summary);
 
                 const statusValue = (t.status || '').toLowerCase();
@@ -3489,13 +3586,14 @@
                 const qaFailed = String(typeof t.qaFailedCount === 'number' ? t.qaFailedCount : '').toLowerCase().includes(filters.qaFailedCount);
                 const totalBugs = String(typeof t.totalBugs === 'number' ? t.totalBugs : '').toLowerCase().includes(filters.totalBugs);
                 const openBugs = String(typeof t.openBugs === 'number' ? t.openBugs : '').toLowerCase().includes(filters.openBugs);
+                const linkedBugs = (t.linkedBugs || []).map(b => b.key).join(', ').toLowerCase().includes(filters.linkedBugs);
 
                 let qaSp = t.qaStoryPoints || t.customfield_10101;
                 if (typeof qaSp !== 'number') qaSp = parseFloat(qaSp);
                 const qaStoryPoints = (isNaN(qaSp) ? '' : Math.round(qaSp * 10) / 10).toString().toLowerCase().includes(filters.qaStoryPoints);
 
                 const subTaskCount = String(typeof t.subTaskCount === 'number' ? t.subTaskCount : 0).toLowerCase().includes(filters.subTaskCount);
-                return key && summary && status && assignee && priority && storyPoints && timeEstimate && actualHrs && timeDiff && created && updated && dueDate && qaFailed && totalBugs && openBugs && qaStoryPoints && subTaskCount;
+                return key && parentKey && summary && status && assignee && priority && storyPoints && timeEstimate && actualHrs && timeDiff && created && updated && dueDate && qaFailed && totalBugs && openBugs && linkedBugs && qaStoryPoints && subTaskCount;
             });
 
             if (!sortField) return filtered;
@@ -3538,6 +3636,7 @@
                 const cells = [];
                 if (columnVisibility.serial) cells.push(`<td class="serial-col">${idx + 1}</td>`);
                 if (columnVisibility.key) cells.push(`<td>${ticket.key || 'N/A'}</td>`);
+                if (columnVisibility.parentKey) cells.push(`<td>${ticket.parentKey || ''}</td>`);
                 if (columnVisibility.summary) cells.push(`<td>${ticket.summary || ticket.title || 'No title'}</td>`);
                 if (columnVisibility.status) cells.push(`<td><span class="ticket-status">${ticket.status || 'Unknown'}</span></td>`);
                 if (columnVisibility.assignee) cells.push(`<td>${ticket.assignee || ''}</td>`);
@@ -3561,6 +3660,10 @@
                 if (columnVisibility.updated) cells.push(`<td>${ticket.updated ? formatDate(ticket.updated) : ''}</td>`);
                 if (columnVisibility.qaFailedCount) cells.push(`<td>${typeof ticket.qaFailedCount === 'number' ? ticket.qaFailedCount : ''}</td>`);
                 if (columnVisibility.totalBugs) cells.push(`<td>${typeof ticket.totalBugs === 'number' ? ticket.totalBugs : ''}</td>`);
+                if (columnVisibility.linkedBugs) {
+                    const lb = (ticket.linkedBugs || []).map(b => b.key).join(', ');
+                    cells.push(`<td>${lb}</td>`);
+                }
                 if (columnVisibility.openBugs) cells.push(`<td>${typeof ticket.openBugs === 'number' ? ticket.openBugs : ''}</td>`);
                 if (columnVisibility.subTaskCount) cells.push(`<td>${typeof ticket.subTaskCount === 'number' ? ticket.subTaskCount : ''}</td>`);
                 return `<tr onclick="window.open('${ticket.url || '#'}', '_blank')" style="cursor:pointer;">${cells.join('')}</tr>`;
@@ -5131,6 +5234,8 @@
                     renderDashboard(lastTickets);
                 } else if (viewMode === 'qa') {
                     renderQAView(lastTickets);
+                } else if (viewMode === 'bugs') {
+                    renderBugsView(lastTickets);
                 }
             }
         }
@@ -6309,6 +6414,350 @@
             renderACView(lastTickets);
         }
 
+        // --- BUGS VIEW LOGIC ---
+
+        function applyBugsFiltersAndSort() {
+            let filtered = getQABugsDetailedList();
+
+            filtered = filtered.filter(t => {
+                const key = (t.key || '').toLowerCase().includes(bugsFilters.key.toLowerCase());
+                const summary = (t.summary || t.title || '').toLowerCase().includes(bugsFilters.summary.toLowerCase());
+
+                const statusValue = (t.status || '').toLowerCase();
+                const status = bugsFilters.statusValues.length === 0 || bugsFilters.statusValues.includes(statusValue);
+
+                const assigneeValue = (t.assignee || '').toLowerCase();
+                const assignee = bugsFilters.assigneeValues.length === 0 || bugsFilters.assigneeValues.includes(assigneeValue);
+
+                const priorityValue = (t.priority || '').toLowerCase();
+                const priority = bugsFilters.priorityValues.length === 0 || bugsFilters.priorityValues.includes(priorityValue);
+
+                const linkedTo = (t.linkedToDisplay || '').toLowerCase().includes(bugsFilters.linkedToDisplay.toLowerCase());
+
+                return key && summary && status && assignee && priority && linkedTo;
+            });
+
+            if (!bugsSortField) return filtered;
+
+            const dir = bugsSortDir === 'asc' ? 1 : -1;
+            return filtered.slice().sort((a, b) => {
+                const va = (a[bugsSortField] ?? '').toString().toLowerCase();
+                const vb = (b[bugsSortField] ?? '').toString().toLowerCase();
+                if (va < vb) return -1 * dir;
+                if (va > vb) return 1 * dir;
+                return 0;
+            });
+        }
+
+        function updateBugsTableBodySource() {
+            const visible = applyBugsFiltersAndSort();
+            const visibleCols = bugsColumns.filter(c => bugsColumnVisibility[c.id]);
+            return visible.map((ticket, idx) => {
+                const cells = visibleCols.map(col => {
+                    let value = '';
+                    if (col.id === 'serial') value = idx + 1;
+                    else if (col.id === 'key') value = ticket.key || 'N/A';
+                    else if (col.id === 'summary') value = ticket.summary || ticket.title || 'No title';
+                    else if (col.id === 'status') value = `<span class="ticket-status">${ticket.status || 'Unknown'}</span>`;
+                    else if (col.id === 'assignee') value = ticket.assignee || '';
+                    else if (col.id === 'priority') value = ticket.priority || '';
+                    else if (col.id === 'linkedToDisplay') value = ticket.linkedToDisplay || '';
+                    const className = col.className ? ` class="${col.className}"` : '';
+                    return `<td${className}>${value}</td>`;
+                }).join('');
+                return `<tr onclick="window.open('${ticket.url || '#'}', '_blank')" style="cursor:pointer;">${cells}</tr>`;
+            }).join('');
+        }
+
+        function setBugsFilter(field, value, evt) {
+            if (evt) evt.stopPropagation();
+            bugsFilters[field] = value;
+            const tbody = document.getElementById('bugsTableBody');
+            if (tbody) {
+                tbody.innerHTML = updateBugsTableBodySource();
+            } else {
+                renderBugsView(lastTickets);
+            }
+        }
+
+        function toggleBugsMultiOption(field, value, checked, evt) {
+            if (evt) evt.stopPropagation();
+            const key = `${field}Values`;
+            const arr = bugsFilters[key] || [];
+            const norm = value.toLowerCase();
+            const exists = arr.includes(norm);
+            if (checked && !exists) {
+                arr.push(norm);
+                bugsFilters[key] = arr;
+            } else if (!checked && exists) {
+                bugsFilters[key] = arr.filter(v => v !== norm);
+            }
+            const tbody = document.getElementById('bugsTableBody');
+            if (tbody) {
+                tbody.innerHTML = updateBugsTableBodySource();
+                const btn = document.getElementById(`dropdown-btn-bugs-${field}`);
+                if (btn) {
+                    const vals = bugsFilters[key];
+                    const label = vals.length === 0 ? 'All' : (vals.length === 1 ? vals[0] : `${vals.length} selected`);
+                    btn.innerHTML = `${label} <span class="caret">▾</span>`;
+                }
+            } else {
+                renderBugsView(lastTickets);
+            }
+        }
+
+        function clearBugsMultiFilter(field, evt) {
+            if (evt) evt.stopPropagation();
+            bugsFilters[`${field}Values`] = [];
+            const tbody = document.getElementById('bugsTableBody');
+            if (tbody) {
+                tbody.innerHTML = updateBugsTableBodySource();
+                const btn = document.getElementById(`dropdown-btn-bugs-${field}`);
+                if (btn) {
+                    btn.innerHTML = `All <span class="caret">▾</span>`;
+                }
+                const container = document.getElementById(`dropdown-bugs-${field}`);
+                if (container) {
+                    container.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+                }
+            } else {
+                renderBugsView(lastTickets);
+            }
+        }
+
+        function setBugsSort(field) {
+            if (bugsSortField === field) {
+                bugsSortDir = bugsSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                bugsSortField = field;
+                bugsSortDir = 'asc';
+            }
+            renderBugsView(lastTickets);
+        }
+
+        function bugsSortIndicator(field) {
+            if (bugsSortField !== field) return '⇅';
+            return bugsSortDir === 'asc' ? '▲' : '▼';
+        }
+
+        function toggleBugsColumnVisibility(colId, checked, evt) {
+            if (evt) evt.stopPropagation();
+            bugsColumnVisibility[colId] = checked;
+            renderBugsView(lastTickets);
+        }
+
+        function resetBugsColumns(evt) {
+            if (evt) evt.stopPropagation();
+            Object.keys(bugsColumnVisibility).forEach(k => bugsColumnVisibility[k] = true);
+            bugsColumnVisibility.summary = false; // Keep summary hidden by default on reset
+            renderBugsView(lastTickets);
+        }
+
+        function bugsColumnsDropdownLabel() {
+            const visibleCount = Object.values(bugsColumnVisibility).filter(Boolean).length;
+            const total = bugsColumns.length;
+            return visibleCount === total ? 'Columns (All)' : `Columns (${visibleCount}/${total})`;
+        }
+
+        function bugsDropdownLabel(field) {
+            const arr = bugsFilters[`${field}Values`] || [];
+            if (arr.length === 0) return 'All';
+            if (arr.length === 1) return arr[0];
+            return `${arr.length} selected`;
+        }
+
+        function clearBugsFilters() {
+            bugsFilters.key = '';
+            bugsFilters.summary = '';
+            bugsFilters.statusValues = [];
+            bugsFilters.assigneeValues = [];
+            bugsFilters.priorityValues = [];
+            bugsFilters.linkedToDisplay = '';
+            renderBugsView(lastTickets);
+        }
+
+        function exportBugsToCSV() {
+            const visible = applyBugsFiltersAndSort();
+            const visibleCols = bugsColumns.filter(c => bugsColumnVisibility[c.id]);
+
+            let csv = visibleCols.map(c => `"${c.label}"`).join(',') + '\n';
+
+            visible.forEach((ticket, idx) => {
+                const row = visibleCols.map(col => {
+                    let value = '';
+                    if (col.id === 'serial') value = idx + 1;
+                    else if (col.id === 'key') value = ticket.key || '';
+                    else if (col.id === 'summary') value = ticket.summary || ticket.title || '';
+                    else if (col.id === 'status') value = ticket.status || '';
+                    else if (col.id === 'assignee') value = ticket.assignee || '';
+                    else if (col.id === 'priority') value = ticket.priority || '';
+                    else if (col.id === 'linkedToDisplay') value = ticket.linkedToDisplay || '';
+                    return `"${String(value).replace(/"/g, '""')}"`;
+                }).join(',');
+                csv += row + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', 'bugs_view.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function renderBugsView(tickets) {
+            const container = document.getElementById('ticketsContainer');
+
+            if (isFetchingDevData) {
+                container.innerHTML = `
+                    <div class="filter-actions" style="border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                        ${getFilterActionsButtons().tabs}
+                    </div>
+                    <div class="loading-state" style="padding: 40px; text-align: center;">
+                        <p>Fetching Bug Data...</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const bugsData = getQABugsDetailedList();
+
+            if (bugsData.length === 0) {
+                container.innerHTML = `
+                    <div class="filter-actions" style="border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                        ${getFilterActionsButtons().tabs}
+                    </div>
+                    <div class="empty-state" style="padding: 40px; text-align: center; color: #666;">
+                        <div style="font-size: 48px; margin-bottom: 20px;">🐛</div>
+                        <h3>No bugs found</h3>
+                        <p>No bugs are linked to stories in this sprint.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Prepare options for multi-selects
+            const statusOptions = Array.from(new Set(bugsData.map(t => t.status).filter(Boolean))).sort();
+            const assigneeOptions = Array.from(new Set(bugsData.map(t => t.assignee).filter(Boolean))).sort();
+            const priorityOptions = Array.from(new Set(bugsData.map(t => t.priority).filter(Boolean))).sort();
+
+            const optionHtml = (opts, selected, field) => opts.map(opt => {
+                const isSel = selected.includes(opt.toLowerCase());
+                const safe = opt.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                return `
+                    <label>
+                        <input type="checkbox" ${isSel ? 'checked' : ''} onchange="toggleBugsMultiOption('${field}', '${safe}', this.checked, event)">
+                        ${safe}
+                    </label>
+                `;
+            }).join('');
+
+            const visibleColumns = bugsColumns.filter(c => bugsColumnVisibility[c.id]);
+
+            const headerCells = visibleColumns.map(col => {
+                const sortableAttrs = col.sortable
+                    ? `class="sortable ${col.className || ''} ${bugsSortField === col.id ? 'sorted' : ''}" onclick="setBugsSort('${col.id}')"`
+                    : `${col.className ? `class="${col.className}"` : ''}`;
+                const indicator = col.sortable ? `<span class="sort-indicator">${bugsSortIndicator(col.id)}</span>` : '';
+                return `<th ${sortableAttrs}>${col.label} ${indicator}</th>`;
+            }).join('');
+
+            const filterRow = visibleColumns.map(col => {
+                if (col.id === 'serial') return '<th class="serial-col">#</th>';
+                if (col.id === 'key') return `<th><input type="text" placeholder="Search key" oninput="setBugsFilter('key', this.value, event)" onclick="event.stopPropagation();" value="${bugsFilters.key || ''}"></th>`;
+                if (col.id === 'summary') return `<th><input type="text" placeholder="Search summary" oninput="setBugsFilter('summary', this.value, event)" onclick="event.stopPropagation();" value="${bugsFilters.summary || ''}"></th>`;
+                if (col.id === 'status') {
+                    return `
+                        <th>
+                            <div class="multi-dd" onclick="event.stopPropagation();">
+                                <button class="multi-dd-btn" id="dropdown-btn-bugs-status" type="button" onclick="toggleDropdown('bugs-status', event)">
+                                    ${bugsDropdownLabel('status')} <span class="caret">▾</span>
+                                </button>
+                                <div class="multi-dd-options" id="dropdown-bugs-status">
+                                    ${optionHtml(statusOptions, bugsFilters.statusValues, 'status')}
+                                    <button class="dd-clear" type="button" onclick="clearBugsMultiFilter('status', event)">Clear</button>
+                                </div>
+                            </div>
+                        </th>
+                    `;
+                }
+                if (col.id === 'assignee') {
+                    return `
+                        <th>
+                            <div class="multi-dd" onclick="event.stopPropagation();">
+                                <button class="multi-dd-btn" id="dropdown-btn-bugs-assignee" type="button" onclick="toggleDropdown('bugs-assignee', event)">
+                                    ${bugsDropdownLabel('assignee')} <span class="caret">▾</span>
+                                </button>
+                                <div class="multi-dd-options" id="dropdown-bugs-assignee">
+                                    ${optionHtml(assigneeOptions, bugsFilters.assigneeValues, 'assignee')}
+                                    <button class="dd-clear" type="button" onclick="clearBugsMultiFilter('assignee', event)">Clear</button>
+                                </div>
+                            </div>
+                        </th>
+                    `;
+                }
+                if (col.id === 'priority') {
+                    return `
+                        <th>
+                            <div class="multi-dd" onclick="event.stopPropagation();">
+                                <button class="multi-dd-btn" id="dropdown-btn-bugs-priority" type="button" onclick="toggleDropdown('bugs-priority', event)">
+                                    ${bugsDropdownLabel('priority')} <span class="caret">▾</span>
+                                </button>
+                                <div class="multi-dd-options" id="dropdown-bugs-priority">
+                                    ${optionHtml(priorityOptions, bugsFilters.priorityValues, 'priority')}
+                                    <button class="dd-clear" type="button" onclick="clearBugsMultiFilter('priority', event)">Clear</button>
+                                </div>
+                            </div>
+                        </th>
+                    `;
+                }
+                if (col.id === 'linkedToDisplay') return `<th><input type="text" placeholder="Search" oninput="setBugsFilter('linkedToDisplay', this.value, event)" onclick="event.stopPropagation();" value="${bugsFilters.linkedToDisplay || ''}"></th>`;
+                return '<th></th>';
+            }).join('');
+
+            const columnChooser = `
+                <div class="multi-dd" onclick="event.stopPropagation();">
+                    <button class="multi-dd-btn" id="dropdown-btn-bugsColumns" type="button" onclick="toggleDropdown('bugsColumns', event)">
+                        ${bugsColumnsDropdownLabel()} <span class="caret">▾</span>
+                    </button>
+                    <div class="multi-dd-options" id="dropdown-bugsColumns">
+                        ${bugsColumns.map(col => `
+                            <label>
+                                <input type="checkbox" ${bugsColumnVisibility[col.id] ? 'checked' : ''} onchange="toggleBugsColumnVisibility('${col.id}', this.checked, event)">
+                                ${col.label}
+                            </label>
+                        `).join('')}
+                        <button class="dd-clear" type="button" onclick="resetBugsColumns(event)">Reset</button>
+                    </div>
+                </div>
+            `;
+
+            const viewActions = getFilterActionsButtons(columnChooser);
+
+            container.innerHTML = `
+                <div class="filter-actions" style="border-bottom: 1px solid #eee; padding-bottom: 15px;">
+                    ${viewActions.tabs}
+                </div>
+                <div class="filter-actions">
+                    ${viewActions.options}
+                </div>
+                <table class="tickets-table">
+                    <thead>
+                        <tr>
+                            ${headerCells}
+                        </tr>
+                        <tr>
+                            ${filterRow}
+                        </tr>
+                    </thead>
+                    <tbody id="bugsTableBody">
+                        ${updateBugsTableBodySource()}
+                    </tbody>
+                </table>
+            `;
+        }
+
         function renderFRView(tickets) {
             const container = document.getElementById('ticketsContainer');
             if (!tickets || tickets.length === 0) {
@@ -7326,6 +7775,11 @@
                 return;
             }
 
+            if (viewMode === 'bugs') {
+                renderBugsView(tickets);
+                return;
+            }
+
             if (viewMode === 'worklog') {
                 renderWorklogView(tickets);
                 return;
@@ -7352,6 +7806,7 @@
                 const statusOptions = getUniqueValues(tickets, 'status');
                 const assigneeOptions = getUniqueValues(tickets, 'assignee');
                 const priorityOptions = getUniqueValues(tickets, 'priority');
+                const parentKeyOptions = getUniqueValues(tickets, 'parentKey');
 
                 const optionHtml = (opts, selected, field) => opts.map(opt => {
                     const isSel = selected.includes(opt.toLowerCase());
@@ -7386,6 +7841,21 @@
                     }
                     if (col.id === 'key') {
                         return `<th><input type="text" placeholder="Search key" oninput="setFilter('key', this.value, event)" onclick="event.stopPropagation();" value="${filters.key || ''}"></th>`;
+                    }
+                    if (col.id === 'parentKey') {
+                        return `
+                                    <th>
+                                        <div class="multi-dd" onclick="event.stopPropagation();">
+                                            <button class="multi-dd-btn" id="dropdown-btn-parentKey" type="button" onclick="toggleDropdown('parentKey', event)">
+                                                ${dropdownLabel('parentKey')} <span class="caret">▾</span>
+                                            </button>
+                                            <div class="multi-dd-options" id="dropdown-parentKey">
+                                                ${optionHtml(parentKeyOptions, filters.parentKeyValues, 'parentKey')}
+                                                <button class="dd-clear" type="button" onclick="clearMultiFilter('parentKey', event)">Clear</button>
+                                            </div>
+                                        </div>
+                                    </th>
+                                `;
                     }
                     if (col.id === 'summary') {
                         return `<th><input type="text" placeholder="Search summary" oninput="setFilter('summary', this.value, event)" onclick="event.stopPropagation();" value="${filters.summary || ''}"></th>`;
@@ -7467,6 +7937,9 @@
                     }
                     if (col.id === 'openBugs') {
                         return `<th class="qa-col"><input type="text" placeholder="Search open bugs" oninput="setFilter('openBugs', this.value, event)" onclick="event.stopPropagation();" value="${filters.openBugs || ''}"></th>`;
+                    }
+                    if (col.id === 'linkedBugs') {
+                        return `<th><input type="text" placeholder="Search linked bugs" oninput="setFilter('linkedBugs', this.value, event)" onclick="event.stopPropagation();" value="${filters.linkedBugs || ''}"></th>`;
                     }
                     return '<th></th>';
                 }).join('')}
